@@ -1,0 +1,326 @@
+# Revision · Holding · Final 환경 안내
+
+2026-11-24 후속: **`Inspire-Sweep-Prof-Revision-v0_1` 추가**. Prof Revision v0 직접 상속, `arm_joint_failure` 일회−3.0만 추가한다. 부모 Formation·Reach10cm·관측·물리·제어·종료·PPO 수치는 동일하다. [계약·실행](environments/PROF_REVISION_V0.md#prof-revision-v0_1) · [개발·검증](logs/2026-11-24_prof_revision_v0_1_implementation.md).
+
+2026-11-24 후속: **`Inspire-Sweep-Prof-Revision-v1` 구현·등록 완료**. Prof Revision v0 직접 상속, 팔 속도 종료 일회−3.0 및 손가락별 거리×양방향 각도 유사도 합산·weight0.3675를 적용했다. Reach10cm·면 선호·관측·물리·제어·종료·PPO 수치를 보존한다. CPU58개·GPU4환경 smoke·16환경 PPO1회 업데이트 통과, 장기 행동 개선은 미검증이다. [계약·실행](environments/PROF_REVISION_V0.md#prof-revision-v1) · [개발 명세](../01_plan/environments/2026-11-24_PROF_REVISION_V1_SPEC.md) · [구현 기록](logs/2026-11-24_prof_revision_v1_implementation.md).
+
+2026-11-24: **`Inspire-Sweep-Prof-Revision-Reach5cm-v0` 추가**. Prof Revision v0 직접 자식으로 `reach_near_radius`만0.10→0.05m로 변경했다. Reach식·weight4.9·목표점·관측·Formation·Sweep·종료·물리·제어·PPO 수치를 모두 상속한다. PPO 로그 이름만 분리했으며 부모 코드와 기존 등록은 보존했다. 사용자 요청으로 GPU·Isaac Sim·학습 없이 표준 라이브러리 정적 검사만 수행했다. [계약](environments/PROF_REVISION_V0.md#reach5cm-v0) · [기록](logs/2026-11-23_prof_revision_v0_implementation.md).
+
+2026-11-24 후속: **Prof Revision v0 관측 정정 완료**. `Inspire-Sweep-Prof-Revision-v0`에 기존 손 관절6D를 복원하여 EEF→손 관절→Finger Pose 순서로 두고 타겟·장애물 OBB 방향을 full3D xyzw quaternion으로 변경했다. policy108D·obstacles176D·encoder176→128→64→32→16·본체124D·export284D다. 초기 snapshot/추적 분리·가장 넓은 타겟 조각·Formation0.245·가시 중심 보상/성공·공통 손끝 Frame 규칙은 유지한다. CPU202개·4환경GPU smoke 통과,2048환경×36step×32회 collection 평균5.7823초·최대6.609초로 모두10초 미만(권장5초 미달). loss/모델/optimizer/checkpoint 유한·양쪽 encoder 갱신 확인, 장기 성공률은 미검증이며 이전99/128D checkpoint와 호환되지 않는다. [환경 계약·실행](environments/PROF_REVISION_V0.md) · [후속 변경·검증](logs/2026-11-23_prof_revision_v0_implementation.md).
+
+2026-11-23: **`Inspire-Sweep-Single-Contact-Zone3-v0` 추가**. Single Contact v0 직접 자식, Zone3(선반 +X/6시 ±30°) 목표만 생성하며 Sweep 진행/후퇴 weight100/−20을 적용한다. 부모의 접촉·중심 Reach·초기 타겟 위치/목표 거리·배치·IK·관측·행동·종료·PPO 보존, 로그 `inspire_sweep_single_contact_zone3_v0`. CPU66개와 전체 설정 대조 통과. 사용자 요청으로 GPU·Isaac Sim·학습 미실행. [계약·실행](environments/SWEEP_V0.md#single-contact-zone3-v0) · [개발·검증](logs/2026-11-23_single_contact_zone3_v0.md).
+
+2026-11-22: **Sweep v0·Single Contact v0/v1 공통 action 안정화**. `SweepEnvCfg`에서만 손6D를 [0,1] 비율(0펼침·1굽힘)로 매핑, 손 속도 weight −0.01→−0.03, Arm/Hand action-rate raw cap100, action-limit weight −3.0·raw cap10을 적용했다. 계통 밖 기본 동작·PPO는 보존한다. 기존 rad 출력 checkpoint와 손 의미가 달라 새 학습 기준이다. [계약](environments/SWEEP_V0.md#행동과-제어) · [변경·검증](logs/2026-11-22_sweep_action_stability.md).
+
+2026-11-21: **`Inspire-Sweep-Single-Contact-v1` 구현·등록**. Single Contact v0 직접 상속, 이동 접근점5cm 초과 거리의 대칭 증분 Reach4.9·구역3 고정+15°점·signed 수평 힘 방향30°/p4·팔 속도 종료 일회−3. 관측·행동·reset·성공·종료·면 선호·기타 보상 보존, PPO는 로그 `inspire_sweep_single_contact_v1`만 변경. CPU196개·GPU4환경11step·부분/자동reset·16환경 PPO1회 업데이트 검증. 장기 성능 미검증. [계약](environments/SWEEP_V0.md#single-contact-v1) · [개발·검증](logs/2026-11-21_single_contact_v1_implementation.md).
+
+2026-11-20 최신 Sweep 계통: **`.180`에서 Sweep-v0, `.250`에서 Single-Contact-v0 학습 중**(사용자 보고). 기존 환경의 Pull/Push 난도와 손등 편향을 배경으로 방향별 접촉면 선호를 구현했다. [계통 설명·환경 비교·현재 현황](environments/SWEEP_FAMILY.md)과 [Sweep-v0 상세 설명](environments/SWEEP_V0.md)을 분리해 관리한다. 새 환경의 장기 성능·편향 개선은 아직 정량 보고되지 않았다.
+
+2026-11-20 후속: `Inspire-Sweep-Single-Contact-v0`는 Sweep v0의 접촉 누적만 이진화한 직접 자식이다. 최근3스텝 중2회 접촉 인정 여부는 boolean, 보상 계수는1/0이다. contact_count 필드는 없다. 부모는 누적 방식 유지, 새 로그 `inspire_sweep_single_contact_v0`. CPU110개·GPU4환경8step/부분reset 검증, 학습 미실행. [계약](environments/SWEEP_V0.md#single-contact-파생-환경) · [검증](logs/2026-11-20_sweep_single_contact.md).
+
+2026-11-20 후속: **새 Sweep 계통 `Inspire-Sweep-v0`** / `inspire_sweep_v0`. 기존 EnvCfg 상속 없이 별도 선언, 공통 Scene/MDP/runtime 부품 재사용. v2 LinearReach 기준에 접촉면 Sweep 선호1.5/0.7·고정 비용·관측 전용 F/T 정규화를 적용했다. Deadzone0°, 12시/6시 구역 각60°·좌우 각120°. CPU116개·GPU4환경8step/부분reset 통과, 장기 학습 미실행. [환경 계약](environments/SWEEP_V0.md) · [검증](logs/2026-11-20_sweep_v0.md).
+
+2026-11-20 후속: `Inspire-Sweep-Only-v2-Test-ActionPenalty-LinearReach`는 v2-Test-ActionPenalty 직접 자식이다. Reach만 weight0.8·근접10cm·선형 감소 폭35cm로 교체하고 초기 거리·episode 길이 배율을 제거했다. 부모 전체 설정에서 Reach만, PPO에서는 로그 이름만 다름을 확인했다. CPU108개·GPU4환경8step·부분reset/추가step 통과, 장기 학습 미실행. [구성·실행](environments/SWEEP_ONLY_FAMILY.md#linearreach-파생-환경) · [개발 로그](logs/2026-11-20_sweep_only_v2_test_action_penalty_linear_reach.md).
+
+2026-11-20: `Inspire-Sweep-Only-v1-ActionPenalty` 추가. v0 직접 상속, 물체 옆 IK·Reach 없음·Deadzone30° 유지, Sweep50/−10/count÷20과 공통 ActionPenalty 적용. 로그 `inspire_sweep_only_v1_action_penalty`. 기존 ID·서버별 학습 현황은 그대로다. [변경·검증](logs/2026-11-20_sweep_only_v1_ik_action_penalty.md).
+
+2026-11-20 최종 학습 배치: **`.250`은 `Inspire-Sweep-Only-v2-Test-ActionPenalty`, `.180`은 `Inspire-Sweep-Only-v1-Test-ActionPenalty` 학습 중, `.30`은 학습 없음**. 계수·카운트 변경(v1_2)의 효과가 없다고 잠정 가정하고 두 실행 모두 progress50·retreat−10·count/20을 사용한다. 효과 부재의 확정이나 새 성공률 보고는 아니다. [최신 상태](environments/SWEEP_ONLY_FAMILY.md#현재-학습-현황-2026-11-20-사용자-보고).
+
+2026-11-20 이전 사용자 학습 보고(후속 배치로 갱신): **`.180` v1_2-Test는 중단 없이 성공률20% 미만, `.250` v2-Test는 약10k에서50% 수준을 기록했으나 중단, `.30` v1-Test는 약5k에서20% 수준을 기록했으나 중단**. v1의 추가 상승은 사용자 기대이며 미검증이다. 기존 환경 실행 결과이며 새 ActionPenalty의 결과가 아니다. 기존11월19일 실행 중 기록보다 이 상태가 우선한다. [관찰·원인 가설·검증 경계](logs/2026-11-20_sweep_only_training_status.md).
+
+2026-11-20: Sweep Only 기존 6종 각각에 `-ActionPenalty` 직접 파생 환경을 추가했다. 원본 ID 보존, wrapper clip 해제 후 팔 ±π/2·손 URDF 한계는 Action term에서 실행 제한한다. 원본 출력의 팔/손 범위 초과 비용 각 −0.03 추가, 기존 Action 변화 L2는 원본 이력으로 계산한다. Last Action 관측은 기존 ±π/2 유지, 모델·IsaacLab·Sweep 보상·Deadzone 불변. [변경·검증](logs/2026-11-20_sweep_only_action_penalty.md).
+
+2026-11-19 최종 사용자 보고: [Inspire-Sweep-Only 계열 안내](environments/SWEEP_ONLY_FAMILY.md)의 현재 학습 배치는 **`.30`: v1-Test, `.180`: v1_2-Test, `.250`: v2-Test**이며 모두 학습 중이다. v2는 약 2000 iteration부터 성공률 상승 경향이 보여 컴퓨터를 바꿔 실험 중이므로 이전 Deadzone 제거 보류 판단을 갱신했다. 환경 코드·계수·상속은 변경하지 않았다.
+
+2026-11-19: `Inspire-Sweep-Only-v2_2-Test`는 v1_2-Test 직접 자식으로 Deadzone만 **0° 고정**이다. 보상 100/−25·원시 접촉 카운트와 나머지 조건 유지, 로그 `inspire_sweep_only_v2_2_test`. GPU·Isaac Sim 없이 표준 라이브러리 기반 코드 검사를 통과했다.
+
+2026-11-19: `Inspire-Sweep-Only-v1_2-Test`는 v1-Test 직접 자식이다. 접촉 카운트 정규화를 끄고 정방향 100·역방향 −25로 설정하여 동일 상태에서 v1 대비 정방향 40배·역방향 2.5배다. Deadzone 30°와 나머지 조건은 유지하며 로그 이름은 `inspire_sweep_only_v1_2_test`다. CPU 코드 검사만 수행했고 GPU·Isaac Sim·학습은 실행하지 않았다.
+
+2026-11-19: `Inspire-Sweep-Only-v2-Test`는 v1-Test 직접 자식으로 목표 방향 Deadzone만 **0° 고정**이다. 보상 50/−10 및 나머지 구성 유지, 로그 `inspire_sweep_only_v2_test`. 학습 중인 GPU 보호 요청에 따라 GPU·Isaac Sim 실행 없이 CPU 정적 검사만 수행했다.
+
+2026-11-19 후속: `--heavy-occlusion`에 실제 mask 피드백을 적용해 뒤 물체가 거의 가려진 정면 사진24장을 생성했다. 각 장면2개 물체의 가시 면적0.55–7.72% 확인, 물체8개와 기존48장 유지. [강한 가림 촬영](logs/2026-11-19_shelf_front_photography.md#후속-거의-보이지-않는-강한-가림24장).
+
+2026-11-19 후속: 정면 촬영에 `--occlusion`을 추가했다. 물체8개를 유지하며 앞뒤 부분 가림 장면24장을 별도 폴더에 저장하고 실제 segmentation mask 비교·bounds 비관통을 검사한다. [부분 가림 촬영](logs/2026-11-19_shelf_front_photography.md#후속-부분-가림-사진24장-추가).
+
+2026-11-19: `scripts/photograph_shelf_front.py`에 로봇 없는 선반·8종 물체의 정면 촬영을 추가했다. 물체의 크기·yaw·위치·순서를 바꾼1920×800 PNG24장, 전체 미리보기와 첫 장면 USD를 생성한다. 학습 task 등록·reset은 유지한다. [촬영용 분포와 검증](logs/2026-11-19_shelf_front_photography.md).
+
+2026-11-19: 로봇만 사용하는 비학습 촬영 실행기 `scripts/photograph_robot.py`를 추가했다. Sweep Only/Finger의 오른손 RH56E2·Axia80 조립 구성을 재사용하며 preset PNG·수동 촬영 GUI·정적 USD를 제공한다. Gym 등록과 학습 환경 계약은 변경하지 않는다. [촬영 환경·검증](logs/2026-11-19_robot_photography.md).
+
+2026-11-19: `Inspire-Sweep-Only-v1-Test`를 `Inspire-Sweep-Only-v0-Test` 직접 자식으로 추가했다. `sweep_progress=50`, `sweep_retreat=−10`만 변경하며 로그 이름은 `inspire_sweep_only_v1_test`다. 부모의 30/−20과 나머지 환경은 유지한다.
+
+2026-11-19 후속: Sweep Only 일반·Test의 `sweep_retreat` weight를 −38.91에서 **−20**으로 변경했다. 정방향 weight 30과 거리 식은 유지하고 Stabilize 두 환경은 기존 −38.91을 유지한다.
+
+2026-11-19 후속: `Inspire-Sweep-Only-v0`와 `Inspire-Sweep-Only-v0-Test`에서 Phase 관측·압착 페널티를 제거했다. 내부 phase 유지, 직접 관측 66D/장애물 64D/export 130D. Stabilize는 기존 동작을 유지한다. [상세 계약](environments/SWEEP_ONLY.md) · [변경 기록](logs/2026-11-19_stabilize_family_audit.md#sweep-only-phase-관측압착-페널티-삭제).
+
+2026-11-19 **Stabilize/Sweep Only 네 환경 검토·정리**: `clip_actions=π/2` 유지, 실제 접촉 높이 설정을 12cm로 일원화하고 상태 생성·표면점 저장 중복을 정리했다. CPU 211개·네 ID 각각 GPU 4환경 통합 검사 통과. Test 초기 로봇 점유 공간 미검사 등 조건 차이는 [전체 검토 기록](logs/2026-11-19_stabilize_family_audit.md)에 명시했다. 일반 IK·Gate 없는 환경은 [Sweep Only 상세 설명](environments/SWEEP_ONLY.md)을 따른다.
+
+2026-11-19 **일반 `Inspire-Sweep-Only-v0` reset 가속**: RTX3090에서2048환경·headless·seed42·32회 모두 collection10초 미만(collection 중앙값8.322초·최대9.579초). GPU convex face 분리 증명과 LP fallback·경계 재검사를 포함한 GPU SAT·FK·채택 FK 재사용·로봇 영역을 피하는 GPU 장애물 배치를 적용했다. 밀기 반대편 손·RED·로봇 비겹침·기존 재시도·보상·관측·PPO를 유지한다. 일반 Stabilize는 초기화 계산만 공유하며 안정화 보상 검증은 제외한다. [변경·검증·원시 결과](logs/2026-11-19_sweep_only_ik_performance.md).
+
+2026-11-19: 두 Stabilize/Sweep Only `-Test`에 GUI 대표 표면점 빨간 마커를 추가했다. 초기 관측 위치에 고정되며 물리 속성이 없다. 일반 headless에서는 생성하지 않는다. [비활성 물체 간섭 검토와 검증](logs/2026-11-19_stabilize_surface_markers.md).
+
+2026-11-19 **일반 IK 환경에도 공통 성능 개선 적용**: `Inspire-Stabilize-Sweep-v0`와 `Inspire-Sweep-Only-v0`에 대표점 GPU 배치·고정 COM cache·비활성 XY 주차·중복 native 기록 생략을 연결했다. 일반 배치는 로봇 점유 공간 검사를 유지한32행 처리/fused RED이며,4후보 IK·충돌 메쉬·실패 행8회 추가 재추출·손 방향/높이·보상/PPO는 유지한다. Test 초기화 경로는 보존한다. CPU132개·일반 Stabilize GPU4환경 실패 주입·Sweep Only GPU64환경8seed 통과. 아래 Test의10초 미만 수치는 일반 환경의 측정값이 아니다. [후속 변경·검증](logs/2026-11-19_stabilize_parent_performance.md).
+
+2026-11-19 **두 Test의2048환경 성능 검증**: `Inspire-Stabilize-Sweep-v0-Test`와 `Inspire-Sweep-Only-v0-Test`의 대표점·배치·reset 비용과 비활성 물체 이동을 개선했다. RTX3090·headless·seed42로 각각32회를 실행해 최대9.44초/9.18초로 전 회차10초 미만이었다. 관측 규칙·활성 배치/RNG·보상·학습량은 유지하고 원본 두 환경과 Finger의 기본 경로는 보존한다. 시작 시 시뮬레이터 생성은 iteration 지표에서 제외한다. [성능 개선·검증·한계](logs/2026-11-18_stabilize_sweep_performance.md).
+
+2026-11-18 **Finger 초기화 Test2종 추가**: `Inspire-Stabilize-Sweep-v0-Test`와 `Inspire-Sweep-Only-v0-Test`가 각각 원본을 상속한다. 사용자 선택에 따라 Finger 공통 원형 배치·기본 방향 단일 Warp IK를 재사용하고 대표 표면점 관측은 유지한다. 후속 요청으로 Test에만 Finger Reach(weight30)를 추가했다. 나머지 보상/Gate 및 기존 두 환경은 보존한다. Test는 원본의5mm 초기 높이·충돌 hull/4후보/8회 복구를 사용하지 않는다. [차이·실행·검증 범위](environments/STABILIZE_SWEEP.md#finger-초기화-test-환경).
+
+2026-11-18 **Sweep Only 파생 환경 추가**: `Inspire-Sweep-Only-v0`는 Stabilize 부모를 상속하고 안정화 점수·초기 이동/회전 비용·Gate를 제거한다. 초기 관측부터 Sweep(phase1), 압착 및 모든 나머지 보상·초기화 복구·관측·제어·종료는 유지한다. 별도 PPO 로그 이름 `inspire_sweep_only_v0`. CPU43개·GPU4환경 검증 통과, 장기 학습 미실행. [차이·실행·검증](environments/STABILIZE_SWEEP.md#sweep-only-파생-환경).
+
+2026-11-18 **독립 Stabilize → Sweep 추가**: `Inspire-Stabilize-Sweep-v0`의 독립 구성·표면점 관측·Gate·보상·reset을 구현했다. 후속 사용자 승인에 따라 타겟·목표 재추출 없이 초기 높이·손목 방향을 변경해 학습 시작의 IK 오류를 수정했다. 후속 정정으로 실제 손바닥(EEF +Z)은 항상 로봇 기준 왼쪽을 향하고 오른쪽 밀기는 손등을 사용한다. 손 하단은 상판 위5mm로 낮췄으며 좌우 목표 분포는 유지한다. 이후 실패 복구 요청에 따라4후보 실패 행만 타겟·목표를 최대8회 추가 재추출한다. 정책 Termination으로 처리하지 않으며 성공 행은 보존한다. 통합 검증과 Ticket10 행동 평가 미완료 범위는 [장면·초기화·관측·제어·보상·종료·PPO 상세 설명](environments/STABILIZE_SWEEP.md) · [개발 로그](logs/2026-11-18_stabilize_sweep_implementation.md)를 따른다.
+
+2026-11-14 **Prof-v2 · Finger-ForceDirection-v0 상세 문서**: 환경 조합·Scene·생성/reset 랜덤화·관측·보상 수식과 판정 경계를 [독립 명세](environments/SWEEP_PROF_V2_AND_FINGER_FORCE_DIRECTION_V0.md)에 정리했다. 실행 코드 변경 없음.
+
+2026-11-13 **Simple17환경 EEF 높이12cm 통일·ForceDirection cosine**: 활성 보상 eef_height_limit를 모두0.12로 고정. Finger-ForceDirection-v0만 힘 방향 원점수를 signed cosine(정방향+1·직각0·반대−1)으로 변경했다.1cm 방향/접촉 예외·성공3cm·가중치0.33 유지. Semi-Prof 방향식·충돌/후퇴 높이는 유지. [변경·검증](logs/2026-11-13_simple_height_cosine.md).
+
+2026-11-13 **Finger-ForceDirection-v0 추가**: Finger-v0-Test 직접 자식. 기존 힘 방향 보상0.33 추가(방향 무시1cm·실제 접촉/수평1N 필요), 목표 내 접촉 간주3→1cm. 성공 종료/메트릭3cm·Clip·Last Action·PPO·기존 보상 보존. 장기 학습 개시 보고 없음. [계약·리뷰·검증](logs/2026-11-13_finger_test_force_direction.md).
+
+2026-11-13 **Prof-v2 손6축 후속 변경**: 해당 ID에만 Finger와 같은 drive6관절 관측·절대 rad 제어를 적용했다. 액션12D·policy66D+obstacles64D, PPO 모델·action-rate 손6채널·zero-radian reset 연동. Runner Clip±π/2·raw Last Action·팔1rad/s 종료·접촉 높이12cm 유지. Prof-v1/Finger 유지, 구8D Prof-v2 checkpoint 직접 재개 불가. [변경·검증](logs/2026-11-13_sweep_simple_prof_v2.md#후속-변경-prof-v2-손6차원-관측제어).
+
+2026-11-13 **Simple Prof-v2 추가**: Prof-v1 직접 상속. 팔 속도 종료1.0rad/s 고정·해당 커리큘럼 제거, Runner `clip_actions=π/2`, 접촉 조건부 Goal Distance/방향 비용의 EEF 높이15→12cm. Last Action은 Clip 후 raw 입력·tanh 제거, 보상식/계수 보존. CPU69개·GPU64환경/2iterations 검증, 장기 행동 개선 미검증. [변경·검증](logs/2026-11-13_sweep_simple_prof_v2.md).
+
+2026-11-13 **Finger-v0-Test Runner Clip**: 해당 ID에만 `clip_actions=π/2`를 적용한다. 12축 공통 Clip은 OSC scale 전이며, Last Action은 manager 입력 그대로(tanh·추가 Clip 없음), action-rate는 Clip 후 current/previous 값의 제곱합·cap 없음. 부모·v1·Wrench 유지. [변경·검증](logs/2026-11-13_finger_v0_test_runner_clip.md).
+
+2026-11-11 **전체 환경 Action 변화 비용 상한 제거**: 활성 inspire_sweep_baseline 전 계열의 action-rate 출력 cap과 관련 설정 제거. 가중치·입력 처리·다른 비용 상한 유지. 과거 문서의 action-rate cap100 설명보다 이번 계약이 우선한다. [기록](logs/2026-11-11_action_rate_uncapped.md).
+
+2026-11-11 **Finger-v1 속도 조건 변경**: 팔 속도 종료1.0rad/s 고정·해당 커리큘럼 제거·팔 비용−0.03. v2/Semi-Prof 및 세 Raw 자식에도 상속. 액션·Last Action·PPO 및 다른 일정 유지. [기록](logs/2026-11-11_finger_v1_fixed_velocity.md).
+
+2026-11-11 **Wrench 실행·관측 Clip 적용**: 참고 예제와 같은 센서 범위 Clip→Scale→모멘트 보정, 손6축 URDF Raw Clip, Last Action은 tanh 없이 Clip된 Raw12D. PPO 원본 샘플·기존 action-rate·고정1rad/s 종료 유지. [계약·검증](logs/2026-11-11_finger_wrench_action_clipping.md).
+
+2026-11-11 **Wrench 팔 속도 종료 수정**: 기존 Finger-v0-Wrench ID의 임계값을1.0rad/s 고정으로 변경하고 해당 커리큘럼만 비활성화했다. 부모·제어기·보상·다른 일정 보존. [후속 기록](logs/2026-11-11_finger_v0_wrench_osc.md#후속-변경-팔-속도-종료10rads-고정).
+
+2026-11-11 **Simple 최종 환경 문서 갱신**: Test/Wrench를 포함한15개 ID와 Finger 제어·종료 비교표, 프레임 차이 및 검증 범위를 정리했다. 코드 변경 없음. [기록](logs/2026-11-11_sweep_simple_final_documentation.md).
+
+2026-11-11 **Finger-v0-Wrench 추가**: Finger-v0 직접 상속, 팔 액션만 AXIA80 센서 원점·축 기준 wrench_abs OSC로 변경. 힘10N/모멘트1N·m scale, 중력 보상·기존 effort 방어 유지, native 모멘트 원점 보정. 손·관측·보상·종료·커리큘럼 보존. CPU67개 통과, GPU 미검증. [계약·검증](logs/2026-11-11_finger_v0_wrench_osc.md).
+
+2026-11-11 **Finger-v0-Test 추가**: Finger-v0 직접 상속, 팔 절댓값 관절 속도>1.0rad/s 실패 종료를 고정 적용하고 해당 임계값 커리큘럼만 제거했다. 나머지 구성·다른 커리큘럼·부모 환경 보존. CPU65개 통과, GPU/PhysX·학습 미검증. [변경·검증](logs/2026-11-11_finger_v0_test_velocity_termination.md).
+
+2026-11-11 **현재 계약: 원환경 롤백·Raw ID 분리**. 기존 Finger-v1/v2·Semi-Prof-v0를 실행 Clip·Clip된 Last Action·팔 비용−0.06으로 복원해 기존 ID로 play한다. Clip 제거·tanh Last Action·비용−0.03은 각 부모를 직접 상속한 Finger-Raw-v1/Finger-Raw-v2/Semi-Prof-Raw-v0로 분리했다. 속도 터미네이션 유지, Semi-Prof5% 상한 제거는 원환경에도 유지. [ID·play·대조·검증](logs/2026-11-11_finger_raw_environment_split.md). 아래 직접 수정 이력은 이 결정으로 대체된다.
+
+2026-11-11 **최종 후속 변경: Finger-v1/v2·Semi-Prof-v0**. 팔 Joint Velocity 비용−0.06→−0.03, 추가 Raw Action Clip 삭제, Last Action은 tanh(raw action)으로 복원했다. 제어·PPO·action-rate는 원본 Raw Action. 일반 Gaussian·초기 분포·속도 종료2→1rad/s(2000–5000/250)·Semi-Prof5% 상한 제거는 유지. 과거 bounded 정책 복원 아님. [변경·검증](logs/2026-11-11_finger_raw_action_restore.md). 아래 동일 날짜의 사건 기록보다 이 계약이 우선한다.
+
+2026-11-11 **Semi-Prof 중대 이슈 후속 수정**: 양의 `force_direction`이 부모 `wrench_change` 뒤에 배치되어 Wrench 활성화 시 순서 검사로 중단됐다. 사용자 후속 지시로 Semi-Prof의 양의 보상 연동5% 상한과 순서 의존을 제거했다. Wrench 변화량·가중치·일정·Gaussian 정책은 유지한다. 실제 RewardManager/커리큘럼 CPU 회귀와 관련92개 검사 통과, GPU 학습 미검증. [원인·검증 누락·수정](logs/2026-11-11_semi_prof_reward_order_incident.md).
+
+2026-11-11 **중대 이슈: Finger-v1/v2·Semi-Prof PPO gradient 비유한값**. 공유 tanh→atanh 정책의 포화·역복원 경로에서 동일 오류를 CPU 재현했다. 일반 Gaussian + 실행 직전 clip으로 수정: PPO 원본 샘플 보존, Last Action/action-rate는 clip 후 raw 값, 정규화 없음. 축별 초기 분포와 진단을 적용하고 구 tanh checkpoint 직접 Resume를 거부한다. 원격 실패 dump 미확보·GPU 장기 학습 미검증. [사건·근거·검증](logs/2026-11-11_gaussian_action_clipping_incident.md). 아래 초기 구현 기록보다 이 수정 계약이 우선한다.
+
+2026-11-11 **물체 스폰 영역 시각화 삭제**: 사용자 요청으로 Simple 베이스와 Relative-IK v0_2_2_4의 표시 구현·설정·전용 분류 함수·train/play 활성화 코드를 모두 제거했다. 실제 RED/WHITE 배치·IK·보상·종료는 유지한다. [범위·검증](logs/2026-11-11_remove_spawn_region_visualization.md).
+
+2026-11-11 **Simple Semi-Prof-v0**: Finger-v1 직접 파생. 손6축·bounded OSC/Last Action·속도 일정 보존. 현재 Reach30, 접촉2-of-3+현재 EEF15cm 미만 조건부 로그 Distance120(불인정 개선분 소급 없음), 접촉 유지 삭제, 멀어짐−31.128. 방향0.33은 현재 물체→목표 XY(Z=0)와 법선+마찰3D 합력 비교. 수평1N 이상·실제 접촉 필요, XY<1cm이면 방향 점수1이고 재이탈하면 각도 계산 복귀.3cm latch 없음.1cm 내부에서는 수직 힘 감점도 우회. CPU 검증·GPU 미검증 범위는 [개발 로그](logs/2026-11-11_sweep_simple_semi_prof.md), 전체 계약은 [환경 안내](environments/SWEEP_SIMPLE_ENVIRONMENTS.md#semi-prof-v0-접촉-조건부-정밀-이동과-힘-방향).
+
+2026-11-11 **Simple Finger-v1/v2**: v0→v1→v2 직접 상속. v1은 정책 출력/입력/Last Action raw clip(팔±0.5/±π/2, 손 URDF6축), Last Action tanh 제거, 팔속도 비용−0.06 및 종료2→1rad/s(2000–5000/250). v2는 면적 일치 로그 Distance·중심까지 접근, XY<2cm 연속3초 후 영구 gate, 목표에서 초기 물체 방향5cm·선반 위8cm의 후퇴 Reach(최대 보상 반경2cm), gate 기반 Contact/timeout success. 부모 보존. CPU110개 통과·2개 skip, GPU/PhysX·학습 미검증. [계약·검증](logs/2026-11-11_sweep_simple_finger_v1_v2.md).
+
+2026-11-10 **정책 평가 실행기**: 기존 task/환경 계약을 유지하며 병렬 수집·오프라인 추출·플롯을 분리했다. Timeout 오차/생성 목표의 전체+6방향 분포와 움직임 중 실제 Contact 비율을 기록한다. [사용·데이터 계약](environments/SWEEP_EVALUATION.md) · [검증](logs/2026-11-10_sweep_evaluation.md). Finger model1200의128환경×20에피소드 수집·추출·플롯·원시 대조 완료. [실험 결과](experiments/2026-11-10_finger_model1200_evaluation.md).
+
+2026-11-10 **Simple Finger-v0**: `Inspire-Sweep-Simple-Finger-v0`는 Simple-v1 직접 상속. 손 관측은 실제 drive6관절(rad), 액션은 독립 절대 목표6관절(rad), 순서는 엄지 굽힘→검지→중지→약지→소지→엄지 대립. Last Action tanh 유지. policy66+obstacles64, 전체action12; 모델·action-rate·reset 차원 대응. 나머지 부모 계약 보존. CPU86개 통과·2개 skip, GPU/PhysX·학습 미검증. [개발·검증](logs/2026-11-10_sweep_simple_finger.md).
+
+2026-11-10 **Simple 목표 내부 풀 카운트**: Simple-v0의 접촉 유지 term을 변경했다. 목표 XY 거리<3cm이면 접촉·이력·EEF 높이와 무관하게 count/reward20. 밖에서는 기존 +1/−2·불인정 보상0. Simple-v1/Hard-v0에 상속, Prof와 과거 Relative-IK 환경은 보존. [변경·검증](logs/2026-11-10_simple_goal_full_contact.md).
+
+2026-11-10 **Simple 계열 종합 설명서**: 베이스 환경의 전체 Manager 구성·관측/액션·보상·종료·커리큘럼·메트릭·PPO와 파생 환경별 변경/실험 의도를 정리했다. 환경 코드는 변경하지 않았다. [설명서](environments/SWEEP_SIMPLE_ENVIRONMENTS.md) · [문서화 기록](logs/2026-11-10_sweep_simple_documentation.md).
+
+2026-11-10 **Simple Hard 계열**: `Inspire-Sweep-Simple-Hard-v0`는 Simple-v1, `Inspire-Sweep-Simple-Prof-Hard-v0`는 Simple-Prof-v1 직접 상속. 목표7–15cm·전방향 DeadZone0도 고정, 방향별 최대 가능 거리가15cm 미만이면 그 최대 거리(7cm 미만 포함)를 선택한다. 안전 root 경계 startup 캐시·reset에서 직접 교점 산출, 방향 재추출 없음. 나머지 부모 계약 유지. CPU78개 통과·2개 skip, GPU/학습 미검증. [계약](environments/SWEEP_SIMPLE_ENVIRONMENTS.md#hard-v0-공통-변경) · [개발·검증](logs/2026-11-10_sweep_simple_hard.md).
+
+2026-11-10 **Sweep Simple 독립 계열**: `Inspire-Sweep-Simple-v0`는 현재 Relative-IK v0_2_2_4와 동등한 독립 EnvCfg/runtime이다. Simple-Prof-v0는 v0_2_2_5 보상, Simple-v1는 v0_2_2_6 Reach, Prof-v1는 Prof-v0에서 Reach만 변경한다. 기존 환경 보존·Fast reset 유지. CPU71개 통과, GPU/PhysX·렌더·학습 미검증. [환경 계약](environments/SWEEP_SIMPLE_ENVIRONMENTS.md) · [개발·검증](logs/2026-11-10_sweep_simple_family.md).
+
+2026-11-09 **Relative-IK-v0_2_2_6 및 v0_2_2_4 메트릭 수정**: v0_2_2_6는 v0_2_2_4 직접 상속으로 Reach만 현재3D 중심 근접 역수 보상으로 변경. 기존 Reach 최대예산 기준으로10초 지급률 보정. v0_2_2_4/runtime부터 최근N개 완료 에피소드 timeout/success 집계 적용(기본10,000), v0_2_2_5/6도 상속. CPU56개 통과, GPU/학습 미검증. [계약·검증](logs/2026-11-09_relative_ik_v0_2_2_6.md).
+
+2026-11-09 **Relative-IK-v0_2_2_5**: v0_2_2_4 직접 상속. 현재 타겟 접촉·EEF15cm 미만 조건으로 policy step 접근 보상120·고정 지시 방향 이탈 비용−6. 기존 후퇴−25.94 유지, 접촉 카운트 보상 삭제. physics 누적 없음, Holding/가속도 복원 없음. 나머지 부모 계약 보존. CPU53개 통과, GPU/학습 미검증. [계약·검증](logs/2026-11-09_relative_ik_v0_2_2_5.md).
+
+2026-11-09 **Relative-IK-v0_2_2_4**: v0_2_2_3-Fast-Test 직접 상속. play 전용 RED/WHITE·장애물 점유 표시(기본4환경), 물체 가속도 비용/관련 일정2개 제거.10초 timeout에서 XY 거리<3cm이고 동시 실패가 없으면 success 분류; timeout bootstrap 유지. 최초 세션 누적 방식은 현재 최근N개 집계로 교체(위 최신 기록 참조). CPU47개 통과, GPU/play 렌더·학습 미검증. [계약·검증](logs/2026-11-09_relative_ik_v0_2_2_4.md).
+
+2026-11-09 **Relative-IK-v0_2_2_3-Fast-Test**: v0_2_2_2-Fast-Test 직접 상속. 접촉 카운트 상한20, 최종 불인정마다−2(하한0). 최종 불인정 step 보상0, 재접촉 인정 시 잔여 카운트+1로 지급 재개. 높이15cm 이상도 보상0. Holding 보상 goal_hold 및 커리큘럼 goal_speed_scale 제거. 나머지 부모 계약 보존. CPU43개 통과, GPU/학습 미실행. [계약·검증](logs/2026-11-09_relative_ik_v0_2_2_3_fast.md).
+
+2026-11-09 **Relative-IK-v0_2_2_2-Fast-Test**: v0_2_2_2-Test 직접 상속. 원 기반 RED/WHITE 배치·장애물0–6 균등·Warp IK·박스 기본 OFF·캐시와 최종 상태 기록 통합. 부모 환경/PPO 보존. CPU 검증 완료, GPU/PhysX 및 Collection 성능 미검증. [환경·실행](environments/WRENCH_REFACTOR_RELATIVE_IK_FAST_TEST_ENVIRONMENT.md) · [개발·검증](logs/2026-11-09_relative_ik_fast_test.md).
+
+2026-11-09 **Relative-IK-v0_2_2_2-Test**: v0_2_2_1-Test 직접 상속. 목표 XY 거리 증가량에만 부과하는 `target_inverse_distance` 추가, 참조 weight -12.97의 두 배인 -25.94. Contact 및 나머지 설정 유지. [계약·검증](logs/2026-11-09_relative_ik_v0_2_2_2_inverse_distance.md).
+
+2026-11-09 **Relative-IK-v0_2_2_1-Test**: v0_2_2-Test 직접 상속. Contact의 2-of-3 인정은 유지하고, 1회 불인정 시 누적 카운트를 즉시 초기화한다(부모는 5회). 높이 15cm 미만·상한 10·weight 0.1 및 나머지 설정 유지. 사용자 관찰인 “후반에 멈춘 뒤 물체가 추가로 밀리는 현상”을 줄이려는 의도로 접촉 유지 요구를 강화했다. [계약·검증](logs/2026-11-09_relative_ik_v0_2_2_1_contact.md).
+
+2026-11-09 **Relative-IK-v0_2_2-Test**: 일반 v0_2_1-Test 직접 상속. Contact만 타겟 전용2-of-3 카운트로 변경(상한10·5회 연속 불인정 초기화·weight0.1), 후속 수정으로 Contact의 EEF 높이를 초기 선반 표면 위15cm 미만으로 제한, 목표 점유 우회 없음. 속도 초과 비용은 계속 없음. [계약·검증](logs/2026-11-09_relative_ik_v0_2_2_contact.md).
+
+2026-11-09 **Relative-IK-v0_2_1-Reset-Test — 잠정 보류**: 사용자 비교에서 효과가 크지 않아 후속 실험에 적용하지 않는다. 기존 코드·로그는 보존한다. v0_2_1-Test 직접 상속.16개 크기 그룹, 그룹당8개 초기 배치·목표·IK 공유/재사용, 목록 충전 뒤32회마다1개 교체. 질량·관성·마찰은 매 reset 독립 추첨. 보상·관측·제어·종료·커리큘럼 유지. [검증·실행](logs/2026-11-09_relative_ik_reset_test.md).
+
+2026-11-09 **Relative-IK-v0_2_1-Test**: v0_2-Test 직접 상속, object를 tilt/장애물 변위로 동등 분리, EEF·타겟 속도 비용/일정 제거. 부모·자식 공통 목표 거리·속도 Metrics8개 수집을 복구하고 장애물 개수 Metrics 제거. [계약·성능 검증](logs/2026-11-09_relative_ik_v0_2_1_metrics.md).
+
+2026-11-09 **Relative-IK-v0_2-Test 독립 환경**: IK-v0_1 Scene·EEF OSC·대칭 관측·실패 종료와 Holding OSC v2 보상을 결합. 반경3cm 고정·성공 종료 삭제·장애물 증가 없음·느린 방향/팔 종료 일정 유지. 후속 요청으로 `arm_speed_excess`/`arm_free_speed` 삭제, 팔 제한은 IK-v0_1 유지, 손은 원본 URDF의10Nm·1rad/s 명시. [환경 계약](environments/WRENCH_REFACTOR_RELATIVE_IK_V0_2_TEST_ENVIRONMENT.md) · [검증 기록](logs/2026-11-09_relative_ik_v0_2_test.md).
+
+2026-11-09 **Relative-IK-v0_1**: direct IK-v0 child; only first-entry bonus disabled. Other environment and PPO settings preserved. [Contract and validation](logs/2026-11-09_relative_ik_v0_1.md).
+
+2026-11-08 **Collection 성능 진단**:2048환경 실제 train.py에서 reset IK·OBB search의 작은 배치 CUDA 호출 비용을 확인했다. 구성·난수열을 보존하는 CPU 계산 경로를 적용했다. [함수별 프로파일·검증·유지한 비용](logs/2026-11-08_collection_profile.md).
+
+2026-11-08 **Relative-IK 최종 범위 확정**: 전면 바깥8–10cm·물체 좌우10–18cm·기본 높이−1~+3cm.86,722개 후보 사전 검증 후 reset SVD·재추출 비활성화. 최종 박스2×8×4cm. [비교 실험·시간 측정](logs/2026-11-08_relative_ik_family.md).
+
+2026-11-08 **Relative-IK 범위 확장**: v0/v1 초기 EEF 범위를 전면 바깥8–13cm·물체 좌우10–18cm·기본 높이−1~+3cm로 확대. 정규화 Jacobian 조건수80 및 관절 여유0.05rad 검사 후 부적합 후보 재추출. [계약·검증](logs/2026-11-08_relative_ik_family.md).
+
+2026-11-08 **Relative-IK 시각화**: IK-v0/v1 모두 좌우 초기 EEF 샘플링 영역을 비물리 테두리 박스2개로 표시한다. [설명](environments/WRENCH_REFACTOR_RELATIVE_IK_ENVIRONMENTS.md).
+
+2026-11-08 **Relative-IK-v0/v1** 추가: v2_7 IK 초기화, Actor/Critic 공통 초기 물체 관측. v1은 접촉 조건부 누적 cosine(weight5), Contact/Hold/최초 진입/성공 보상과3초 성공 종료 제거. [환경 계약](environments/WRENCH_REFACTOR_RELATIVE_IK_ENVIRONMENTS.md) · [검증](logs/2026-11-08_relative_ik_family.md).
+
+2026-11-08 **Relative-v2_7**: direct v2_1 child; goal-conditioned IK initial Arm pose, opposite target side, outside shelf, default orientation preserved. CPU91 and GPU reset/IK checks passed. [Contract and validation](logs/2026-11-08_relative_v2_7.md).
+
+2026-11-08 **Relative-v2_6**: direct v2_1 child; only goal distribution changes to a fixed 9cm straight-left offset. [Contract and validation](logs/2026-11-08_relative_v2_6.md).
+
+2026-11-08 **Relative-v2_5**: direct v2_4 child; Contact reward disabled, all other environment settings preserved. [Contract and validation](logs/2026-11-08_relative_v2_5.md).
+
+2026-11-08 **Relative-v2_4 ??**: v2_1 ?? ??, EEF14cm ?? ??? ??? ?? XY ?? ???(weight100), cosine??? ?? ?? ??. Contact ? ?? ?? ??. [?????](logs/2026-11-08_relative_v2_4.md).
+
+2026-11-08 Relative-v2_3의 Reaching Point에 기본 활성 자홍색 비물리 마커를 추가했다. [표시·검증 기록](logs/2026-11-08_relative_v2_3.md#후속-reaching-point-시각화).
+
+2026-11-08 **Inspire-Wrench-Refactor-Relative-v2_3**: v2_1 직접 상속, Contact 유지. Reaching 기준점은 현재 물체의 목표 반대 방향 XY5cm·물체 중간 높이이며 접근 반경5cm. [계약·검증](logs/2026-11-08_relative_v2_3.md).
+
+2026-11-08 **Inspire-Wrench-Refactor-Relative-v2_2** 추가: v2_1 직접 상속, Contact 유지 보상만 `None`. 나머지 환경·PPO 수치는 보존한다. [변경·정적 검증](logs/2026-11-08_relative_v2_2.md). GPU 스모크는 사용자 요청으로 생략했다.
+
+2026-11-08 **Relative-v2_1/v3 방향별 Test 8개 추가**: 각 부모 직접 상속, Right/Pull/Left/Push 목표 각도만 제한. [환경 계약 및 8개 순차 녹화 명령](logs/2026-11-08_relative_direction_tests.md).
+
+2026-11-07 **Inspire-Wrench-Refactor-Relative-v2_1** 추가. v2 직접 상속으로 거리 항만 시작점 기준 누적 이동 cosine으로 변경하며 `target_inverse_distance`를 유지한다. [계약](environments/WRENCH_REFACTOR_RELATIVE_V2_ENVIRONMENT.md#relative-v2_1-시작점-기준-누적-변위-cosine) · [검증](logs/2026-11-07_relative_v2_1.md).
+
+2026-11-07 **Relative 공통 보상·v3 종료 변경**: v0/v2/v3는 현재→목표와 실시간 이동 벡터 cosine을 사용한다. 이동 기준점은XY1mm 이상일 때 갱신하며, 별도 직전step 대비 거리 증가에는 `target_inverse_distance`(−12.97/m)를 적용한다. v3의 최초 진입·유지·성공 보상 및 성공 종료는 제거한다. 실패가 없으면10초 timeout으로 끝난다. [구현·검증](logs/2026-11-07_relative_motion_rewards.md).
+
+2026-11-07 **Relative-v0 공통 한도**: v2/v3에 F/T 최종 관측 힘±150N·모멘트±8N·m 및 raw Action Rate의 Arm·Hand 제곱합 각각 cap100이 상속된다. clipping은 질량·관성 보정과 noise 이후 관측에만 적용하며 보상/진단 원본을 보존한다. [구현·검증](logs/2026-11-07_relative_observation_action_limits.md).
+
+2026-11-06 **현재 Relative 계약**: 활성 환경은v0·v2·v3, v1은 코드·등록·runner를 삭제했다. Axia는 v0부터280g 공통이다. v0/v3는 Actor·Critic 모두 초기 타겟, v2는 **Actor 초기 / Critic 현재**다. 모두 EEF 좌표이며 EEF pose만 Base다. v3는 v0 직접 상속으로 접촉 유지 보상을 없애고 현재 접촉 조건부 cosine 거리(weight25)를 사용한다. 물리 속도3.14rad/s·effort150/150/150/28/28/28Nm·종료4→2 커리큘럼은 유지한다. [최종 변경·검증](logs/2026-11-06_relative_family_280g_v3.md) · [v3 계약](environments/WRENCH_REFACTOR_RELATIVE_V3_ENVIRONMENT.md).
+
+아래 날짜별 항목은 이전 작업 이력이다. Relative의 질량·v2 관측 역할·v1 활성 여부는 위 현재 계약을 우선한다.
+
+2026-11-06 최종: Relative-v0/v1/v2의 Arm6축 물리 속도3.14rad/s, effort150/150/150/28/28/28Nm. 종료 임계값4.0을10,000까지 유지하고10,250부터250iteration마다0.05 감소하여20,000부터2.0 유지. 진단 print 롤백·속도 종료 활성. **사용자 정정으로 Relative-v1 Axia280g 유지**, v0/v2 질량은 기존값. [변경·검증](logs/2026-11-06_relative_joint_limits_curriculum.md).
+
+2026-11-06 후속: Relative-v1에만 Axia 질량 0.280 kg 적용. F/T 측정 경계 위쪽 하우징이므로 하위 손 보정식 유지. CPU86개·4환경 PhysX 보정 시험 통과. model_400/seed42/400step 비교에서 wrist3 종료11→13회로 완화 확인 안 됨. v0/v2·공통 질량 상수는 보존.
+
+2026-11-06 후속: Relative-v1에만 arm joint velocity 종료 진단 출력 활성화. 초과 관절명·속도·env ID·3 rad/s 임계값 출력, 종료 판정과 다른 환경은 보존. CPU 79개 통과, Sim·Lab 실행 생략.
+
+2026-11-06: **Inspire-Wrench-Refactor-Relative-v2**는 v0 직접 파생이다. Actor 현재 타겟 / Critic 초기 타겟을 모두 EEF로 관측하며, 나머지 구성은 v0를 보존한다. [계약](environments/WRENCH_REFACTOR_RELATIVE_V2_ENVIRONMENT.md) · [CPU 검증](logs/2026-11-06_wrench_refactor_relative_v2.md).
+
+2026-11-06: **Inspire-Wrench-Refactor-Relative-v1**는 Relative-v0의 장애물 좌표계만 Base로 변경한 직접 파생이다. [계약·실행](environments/WRENCH_REFACTOR_RELATIVE_V1_ENVIRONMENT.md) · [검증](logs/2026-11-06_wrench_refactor_relative_v1.md).
+
+2026-11-06: **Inspire-Wrench-Refactor-Relative-v0**는 v3_1 직접 상속이다. Actor/Critic/storage 공통58+64D, EEF 상대 초기 타겟·장애물 및 goal XYZ, 촉각17D, Hand effort10Nm, 최초 진입+10. [계약·실행](environments/WRENCH_REFACTOR_RELATIVE_V0_ENVIRONMENT.md) · [검증 기록](logs/2026-11-06_wrench_refactor_relative_v0.md).
+
+2026-11-06: **Refactor 수동 조작 실행기**를 추가했다. v0 Scene/Hand와 v3 EEF 보정 OSC를 사용해 한 환경에서 world XYZ/RPY·Hand2D를 조작하며 전체/선반/로봇 reset·선반 snapshot 저장/복원을 제공한다. 기존 Gym 환경·PPO 변경 없음. [실행·동작·검증](logs/2026-11-06_wrench_refactor_manual.md).
+
+2026-11-06: **Inspire-Wrench-Refactor-v0_1/v1_1/v2_1/v3_1**는각원본직접상속의정책입력Action Rate변형이다. Arm cap제거·계수유지, 양쪽목표·속도종료유지. [등록·계약·실행](environments/WRENCH_REFACTOR_POLICY_RATE_ENVIRONMENTS.md).
+
+2026-11-06: **Inspire-Wrench-Refactor-v3-Test**는 v3 직접 상속의 왼쪽(world −Y) 목표 전용 진단 환경이다. 기존 v3 checkpoint 사용 가능. [계약·실행·검증](logs/2026-11-06_wrench_refactor_v3_test_left.md).
+
+2026-11-06 수치 후속: Refactor 공통 목표 거리는 **6–12cm**다. 기존5–10cm에서 수치만 바꾸고 방향·샘플링·OSC·보상은 유지했다.
+
+2026-11-06 후속: **Refactor v0 및 모든 파생 환경 목표 거리를5–10cm로 제한**. 방위/조건부 거리 균등과 방향 deadzone 커리큘럼 유지. [최종 영역·검증](logs/2026-11-06_wrench_refactor_goal_annulus.md).
+
+2026-11-06 정정: **v2←v0**(별도 접촉 보상·거리weight5×누적변위 cosine, root OSC), **v3←v2**(EEF task-space OSC). v0/v1 보존. [v3 계약](environments/WRENCH_REFACTOR_V3_ENVIRONMENT.md) · [검증](logs/2026-11-06_wrench_refactor_v2_fix_v3.md).
+
+2026-11-06 후속: **Refactor-v0 기반 직접 수정**. OSC를 Final·Revision 공통 root-frame 구현으로 전환하고 목표 중심은 시작점에서5cm 이상 떨어진 곳만 샘플링한다. 오른손 USD·EEF offset·Hand·F/T는 보존하며 v1/v2도 상속한다. [변경·검증](logs/2026-11-06_wrench_refactor_root_osc_min_goal.md).
+
+2026-11-06: **Inspire-Wrench-Refactor-v2**는 사용자 정정으로 v0 직접 상속. 별도 접촉 보상·거리weight5를 유지하고 거리 항에 XY signed cosine을 곱한다. [계약](environments/WRENCH_REFACTOR_V2_ENVIRONMENT.md).
+
+2026-11-06: **Inspire-Wrench-Refactor-v1** 추가. v0직접상속,접촉유지보상제거·현재step접촉조건부거리보상weight25. [계약](environments/WRENCH_REFACTOR_V1_ENVIRONMENT.md).
+
+2026-11-06 후속: Refactor의 Hand 관절속도 페널티는 원본 URDF 독립 구동6축만 합산하며 미믹6축을 제외한다. 계수·Arm비용·동작제어·관측·종료·커리큘럼은 유지한다.
+
+2026-11-06 Refactor: Wrist3−π/2, Arm속도종료3rad/s. 실제GUI32환경 mass/readback·7168reset검증 및 좌우촉각시험은 [후속 검증 로그](logs/2026-11-06_wrench_refactor_gui_validation.md)를 따른다. 초기 GPU불가 기록은 sandbox 접근 제한으로 정정했다.
+
+2026-11-05 **Inspire-Wrench-Refactor-v0 후속 수정**: 선반30kg 명시적 MassAPI, 오른손790g 및 관성 보정, EEF기준 OSC/Jacobian/속도, tactile.05N. CPU159개 통과. 문서의114파일을 빈 디렉토리에 복원하여 실제 config import/USD 검사 통과. [재구성 상세 명세](environments/WRENCH_REFACTOR_V0_ENVIRONMENT.md) · [소스 부록](environments/WRENCH_REFACTOR_V0_RECONSTRUCTION.md) · [검증 로그](logs/2026-11-05_wrench_refactor_mass_eef_spec.md). GPU물리 검증은 남아 있다.
+
+2026-11-05: **`Inspire-Wrench-Refactor-v0`**는 기존 Wrench CFG/runtime 상속 없는 독립 구성이다. 오른손 원본,17물체 고정풀,34촉각,Actor/Critic 동일차원,연속 목표 균등 및 요청 보상/종료/커리큘럼을 적용했다. [환경 계약](environments/WRENCH_REFACTOR_V0_ENVIRONMENT.md) · [검증/미검증](logs/2026-11-05_wrench_refactor_v0_implementation.md). 실제 PhysX/학습은 NVIDIA driver 부재로 미검증이다.
+
+2026-11-05: [**Wrench v0 계열 상세 명세**](environments/WRENCH_V0_FAMILY_ENVIRONMENTS.md)를 작성했다. v0~v0_4의 상속·Scene/reset·관측·pose OSC·전체 보상·커리큘럼·종료·PPO·로그 해석을 현재 코드로 대조했다. 접촉 weight0.1, Hand raw rate, 정규화 OSC 토크 rate의 상한/기대값 차이를 명시한다. 문서 작업이며 환경 코드·검증 상태는 변경하지 않았다.
+
+2026-11-05: **Inspire-Wrench-v0_3 → v0_4 추가**. v0_2→v0_3→v0_4 직접 상속. v0_3은 Gray/White 각각0–4 균등 reset·population/free-speed 커리큘럼 제거·속도 기준0.02m/s·EEF14cm·OSC 출력 토크 정규화 변화량·최초 진입 무감쇠4cm/s다. v0_4는 높이 조건을 둔 Holding 최단 거리 개선량으로 교체하며 weight3.7을 유지한다. 실제 부모 접촉 weight0.1도 보존했다. CPU103개 통과, GPU/학습 미실행. [환경·검증 계약](environments/WRENCH_V0_3_V0_4_ENVIRONMENTS.md).
+
+2026-11-05 후속: Wrench-v0_2 Contact Count를 최대10으로 제한하고 임시 print 블록 전체를 주석 처리했다. 접촉 인정·불인정5회 초기화 조건과 weight1.45는 유지한다. 기본dt0.02초에서 접촉 보상 상한은 step당0.29다. CPU89개 통과, GPU/play 미실행.
+
+2026-11-05: **Inspire-Wrench-v0_2** 추가. v0 직접 상속, 접촉 조건 없는 cosine 거리 보상(3cm 미만1), 2-of-3 누적 접촉·불인정5회 초기화, −1/−1 장애물 기준에서2k 시작3k 교대·reset±1 랜덤화. CPU87개 통과, GPU/학습 미검증. [환경·검증 계약](environments/WRENCH_V0_2_ENVIRONMENT.md).
+
+2026-11-04: **Inspire-Wrench-v0_1** 추가. v0 직접 상속, contact 제거·연속 접촉/각도 계수 거리 보상, 거리3cm 미만 alpha=1. Deadzone40° 고정, 목표 허용 거리4.0–7.5cm. CPU78개 통과, GPU/학습 미검증. [환경 계약](environments/WRENCH_V0_1_ENVIRONMENT.md) · [개발 기록](logs/2026-11-04_wrench_v0_1_implementation.md).
+
+2026-11-04: **Inspire-Wrench-v2** 추가. v1 직접 상속, Arm 목표 ±10N/±0.5Nm·보정 후 제한 ±12N/±0.6Nm로1/10 축소. 범위 정규화 action-rate와 Hand/나머지 환경은 상속한다. CPU46개 통과, GPU 미검증. [v2 계약](environments/WRENCH_V0_V1_ENVIRONMENT.md#13-inspire-wrench-v2-v1의-arm-범위를110로-축소).
+
+2026-11-04 문서 통합: [Wrench-v0 전체 명세와 v1 변경점](environments/WRENCH_V0_V1_ENVIRONMENT.md). 현재 코드 기준 랜덤화·관측·액션·15개 보상·커리큘럼·종료·PPO 및 sensor wrench 제어와 정규화 action-rate를 한 문서에 정리했다. 문서 작업이며 환경 코드 변경 없음.
+
+2026-11-04 후속: Wrench-v1의 robot_action_rate_penalty는 Arm Desired Wrench를 정책 목표 범위로 정규화한 [-1,1] 변화량을 사용한다. Hand raw 계산과 계수는 유지하며 CPU44개 통과. v0는 보존했다.
+
+2026-11-04: **`Inspire-Wrench-v1`**은 Wrench-v0 직접 상속이며 OSC만 F/T sensor 중심6축 closed-loop wrench 제어로 변경한다. `[wrench_abs]`, motion6축0, wrench6축1, feedback gain0.2, 명령축별목표 ±100N/±5Nm, 보정 후 명령 제한 ±120N/±6Nm이다. [참고 코드·파라미터·프레임·실행](environments/WRENCH_V1_ENVIRONMENT.md) · [검증 로그](logs/2026-11-04_wrench_v1_osc.md). CPU80개 통과, 실제 GPU 추종/학습은 미검증.
+
+2026-11-04: **`Inspire-Wrench-v0`**는 Test-v2의 독립 후속 환경이다. 이전 환경 상속 없이 직접 구성하며 EEF120mm·연속3초 정지 성공/+75·RED 확장/Gray 후퇴·startup 랜덤화 분리·Dead Zone10k/3k를 적용한다. [전체 계약·실행](environments/WRENCH_V0_ENVIRONMENT.md) · [검증 로그](logs/2026-11-04_wrench_v0_implementation.md). CPU82개 통과, 실제 GPU collection1~2초는 미검증이다.
+
+2026-11-04: `Revision-Test-v2`에 임시 종료 원인 print를 추가했다. `runtime/revision.py`의 `_reset_idx` TEMP 블록에서 환경 ID·step·발동 term 전체를 출력하며, Test-v2-GT·부모 환경은 제외한다. 종료 판정은 유지한다. 후속으로 `shelf_failure`·`object_fall_or_tilt` 함수의 TEMP 블록에서 매 제어 step 현재 값·임계값·개별 판정을 출력한다. 기존 play 프로세스를 재시작하면 적용된다.
+
+활성 기반 패키지는 `src/inspire_sweep_baseline`이다. **2026-11-03 개발 대상은 Revision-v1을 상속한 Revision-v2 / Test-v2**이며, 기존 Holding → Final 환경은 비교·기존 학습 재현용으로 보존한다. `src/axia80_feasibility`는 현재 사용하지 않는다. 이 문서는 작업 대상을 찾는 색인이다. 수식·수치·실험 이력은 요청한 환경의 설명과 실제 코드만 확인한다.
+
+요청 버전 비교: [Holding OSC·ObjectRandom·Final·Revision 9개 환경 비교](environments/HOLDING_FINAL_REVISION_NINE_ENV_COMPARISON.md)는 씬·관측·보상·커리큘럼·터미네이션·기타와 최종 요약 표를 현재 코드 기준으로 정리한다(2026-11-04).
+
+## Revision — 독립 기반과 파생 환경
+
+**Test-v2-GT(2026-11-03):** `Isaac-Inspire-Revision-Test-v2-GT`는 Test-v2 직접 파생이다. Actor에 Critic의 실시간 타겟 XYZ3D만 추가하고 기존 초기 타겟·초기 장애물 관측·Critic·보상·PPO를 보존한다. Actor 원시121→124D·MLP73→76D이며 새 학습용이다. [구현 계약](environments/REVISION_V2_ENVIRONMENT.md#test-v2-gt-실시간-타겟-위치-대조-실험) · [검증 기록](logs/2026-11-03_revision_v2_gt_implementation.md).
+
+**구현(2026-11-03):** `Isaac-Inspire-Revision-v2` / `Isaac-Inspire-Revision-Test-v2`. v1→v2→Test 직접 상속, 거리·Hold·접촉 모두 EEF95mm 미만, Hold는 weight10·2.5~3.5cm Smoothstep·속도 감쇠 없음, 최초 진입은 높이 조건 없이 최대+25×속도 Gaussian 감쇠(free0.01·scale0.02m/s), timeout+75·free acceleration15m/s²다. 기존 속도 커리큘럼과 PPO gamma0.98을 유지한다. Test는 타겟 형상만 cylinder다. [구현 계약·실행](environments/REVISION_V2_ENVIRONMENT.md) · [개발·검증](logs/2026-11-03_revision_v2_implementation.md).
+
+2026-11-03 계측 종료: Test-v1의 EEF 높이 print와90/95/100mm 시각화 면을 모두 주석 처리했다(설정·출력 블록·생성 호출·helper 전체). v2·Test-v2·Test-v2-GT도 활성 임시 계측 코드가 없음을 확인했다. [처리·검증 기록](logs/2026-11-02_revision_v1_implementation.md#2026-11-03-임시-높이-계측-주석-처리).
+
+`Isaac-Inspire-Revision-v1`은 `RevisionV1EnvCfg(RevisionEnvCfg)`, `Isaac-Inspire-Revision-Test-v1`은 `RevisionV1TestEnvCfg(RevisionV1EnvCfg)`다. Test의 유일한 과업 설정 차이는 타겟 형상 cylinder 고정이며 크기·장애물 랜덤화는 유지한다. [v1 독립 상세 문서: 관측·행동·장면·15개 보상·종료·커리큘럼·PPO](environments/REVISION_V1_ENVIRONMENT.md) · [개발·리뷰·검증](logs/2026-11-02_revision_v1_implementation.md).
+
+`Isaac-Inspire-Revision-v0`는 `envs/revision_envs.py:RevisionEnvCfg`와 `runtime/revision.py:RevisionEnv`를 사용한다. 둘 다 Isaac Lab 기반 클래스를 직접 상속하며 기존 환경 CFG를 부모로 사용하지 않는다. v0_2를 기능 기준으로 중앙 크기 랜덤화·10개 물리 물체·OBB 배치·Actor/Critic 관측 분리·성공 3cm/Hold 8cm·접촉 높이 조건을 적용한다. [환경 명세](environments/REVISION_V0_ENVIRONMENT.md) · [구현 및 검증 상태](logs/2026-11-01_revision_v0_implementation.md).
+
+## Final — 기존 비교 환경
+
+물체 전시: [Shelf Object Gallery](../../../src/shelf_object_gallery/README.md)는 Final과 동일한 선반 위에 절차적 4종과 YCB 상자·캔 4종을 기준 크기 n×m 격자로 보여주는 별도 Isaac Lab 패키지다. 기본 2×4에서 총 8종을 하나씩 표시하며 로봇·학습은 없다. [구현·검증 기록](logs/2026-11-01_shelf_object_gallery.md).
+
+설명 문서 모음: [논문 작성용 환경 근거 자료](../04_article/environment_reference/README.md). [선반 작업 영역과 물체 형상](../04_article/environment_reference/FINAL_SHELF_AND_OBJECT_GEOMETRY.md)은 작업면 경계, 기본 치수·scale, 충돌 형상과 물체 역할 선택을 설명한다.
+
+학습 구조: [Final 계열의 Actor·Critic·관측 MLP와 PPO 손실](../04_article/environment_reference/FINAL_TRAINING_NETWORKS.md)은 최신 GoalAccuracy v0_2_2를 포함한 네트워크 구조, 관측 차원, GAE, 손실별 역전파 경로를 설명한다.
+
+장면 생성: [최종 환경의 Scene Generation and Randomization](../04_article/environment_reference/FINAL_SCENE_GENERATION_AND_RANDOMIZATION.md)은 GoalAccuracy v0_2_2의 타겟·목표 추출, RED/Gray/White OBB 배치 알고리즘, 실패 처리, 형상·크기·물성 무작위화 시점을 설명한다.
+
+상태와 관측: [최종 환경의 State and Privileged Information](../04_article/environment_reference/FINAL_STATE_AND_PRIVILEGED_INFORMATION.md)은 전체 환경 상태, Actor 137D·Critic 140D 관측, 초기 장면 캐시·센서 노이즈, Critic 전용 현재 타겟 XYZ와 부분 관측의 의미를 설명한다.
+
+F/T 센서: [최종 환경의 센서 형상과 Wrench 계측](../04_article/environment_reference/FINAL_FT_SENSOR_AND_WRENCH.md)은 실린더 치수, 측정 고정 관절, EEF 기준점 변환, 손의 중력·관성 보상과 관측 노이즈를 설명한다.
+
+배치 규칙: [OBB 텐서 배치 모듈](environments/BBOX_SCENE_LAYOUT.md)은 **GoalAccuracy v0_2_1 및 그 파생 v0_2_2**에서 사용한다. v0_2_1의 회귀·기하 106개 및 GPU reset 검증은 [연결 기록](logs/2026-10-31_final_v0_2_1_obb_reset.md)을 따른다. v0_2_2의 물리 객체 축소·역할 공유·재질 재사용과 별도 검증은 [구현 기록](logs/2026-10-31_final_v0_2_2_compact_scene.md)을 따른다.
+
+등록 위치는 패키지 `__init__.py`, EnvCfg는 `envs/final_envs.py`다. 아래 ID의 공통 접두사는 `Isaac-Inspire-Final-`이다. 기존 오타 `GoalAccuacy`는 2026-10-28에 `GoalAccuracy`로 교정했다. 기존 v0/v1 동작은 유지한다.
+
+| ID 접미사 | 설정 상속 | 용도·설명 |
+| --- | --- | --- |
+| `v0` | `FinalEnvCfg` → Isaac Lab `ManagerBasedRLEnvCfg` | [독립 기반 구성](environments/FINAL_V0_ENVIRONMENT.md) |
+| `v1` | `FinalV1EnvCfg` → `FinalEnvCfg` | [Final v1 상세](environments/FINAL_V1_ENVIRONMENT.md) |
+| `v1-1` | `FinalV1EnvCfg` 파생 | 지수형 goal distance 보상. [변형 비교](environments/FINAL_V1_V2_ENVIRONMENTS.md) |
+| `Test-v1` | `FinalV1EnvCfg` 파생 | object penalty 분리 계측. [변형 비교](environments/FINAL_V1_V2_ENVIRONMENTS.md) |
+| `GoalAccuracy-v0` | `FinalV1EnvCfg` 파생 | [1cm 정확도 환경](environments/FINAL_GOAL_ACCURACY_V0_ENVIRONMENT.md) |
+| `GoalAccuracy-v0_1` | `FinalGoalAccuracyEnvCfg` 파생 | [2cm 목표·타겟 접촉·연속 Hold·지수 거리·직육면체](environments/FINAL_GOAL_ACCURACY_V0_1_ENVIRONMENT.md) |
+| `GoalAccuracy-v0_2_1` | `FinalGoalAccuracyV0_2EnvCfg` 파생 | [실제 타겟 접촉만·timeout +75·매 reset 타겟 종류 재추첨](environments/FINAL_GOAL_ACCURACY_V0_2_1_ENVIRONMENT.md) |
+| `GoalAccuracy-v0_2_2` | `FinalGoalAccuracyV0_2_1EnvCfg` 파생 | [물리 객체 12개·역할 공유·prototype/재질 재사용, 보유 형상 내 타겟 재선택](environments/FINAL_GOAL_ACCURACY_V0_2_2_ENVIRONMENT.md) |
+| `GoalAccuracy-v0_3` | `FinalGoalAccuracyV0_2EnvCfg` 파생 | [3cm 목표·접촉 weight 1/4·최단 거리 갱신·timeout +100](environments/FINAL_GOAL_ACCURACY_V0_3_ENVIRONMENT.md); 부모 v0_2는 v0_1에 timeout +30 추가 |
+| `GoalAccuracy-v1` | `FinalGoalAccuracyEnvCfg` 파생 | [1cm 고정 + 외곽 보상·goal speed 일정 복원, Final v1 대조](environments/FINAL_GOAL_ACCURACY_V1_ENVIRONMENT.md) |
+| `v2` | `FinalV1EnvCfg` 파생 | 타겟 배치 영역 변경. [변형 비교](environments/FINAL_V1_V2_ENVIRONMENTS.md) |
+| `Test-v2` | Final v2 파생 | 최종 장애물 개수로 시작. [변형 비교](environments/FINAL_V1_V2_ENVIRONMENTS.md) |
+
+Holding → Final은 개발 흐름을 뜻한다. Final v0는 Holding EnvCfg를 직접 상속하지 않는다. Final 내부 버전의 직접 부모와 최종 활성 설정을 구분하여 확인한다.
+
+2026-10-30: **GoalAccuracy v0·v1·v0_1·v0_2·v0_3 공통**으로 장애물 요청 수는 5000 iteration의 Gray 4·White 5가 상한이다. 이후 증가하지 않는다. Final v1 등 Accuracy 밖 환경은 기존 일정을 유지한다. [변경·검증 기록](logs/2026-10-30_goal_accuracy_population_cap.md).
+
+## Holding — 기반 계열
+
+아래 ID의 공통 접두사는 `Isaac-Inspire-Contact-Sweep-Clutter-Fusion-Holding-`이다.
+
+| ID 접미사 | EnvCfg 위치·상속 | 상세 안내 |
+| --- | --- | --- |
+| `v0` ~ `v4` | `envs/contact_sweep_clutter_fusion_holding_envs.py`; v1부터 직전 Holding 버전 상속 | [v0](environments/CONTACT_SWEEP_CLUTTER_FUSION_HOLDING_V0_ENVIRONMENT.md), [v1](environments/CONTACT_SWEEP_CLUTTER_FUSION_HOLDING_V1_ENVIRONMENT.md), [v2](environments/CONTACT_SWEEP_CLUTTER_FUSION_HOLDING_V2_ENVIRONMENT.md), [v3](environments/FUSION_HOLDING_V3_FAMILY.md), [v4](environments/FUSION_HOLDING_V4_FAMILY.md) |
+| `OSC-v0` ~ `OSC-v4` | `envs/contact_sweep_clutter_fusion_holding_osc_envs.py`; 각각 같은 번호 Holding 상속 | [OSC v0](environments/CONTACT_SWEEP_CLUTTER_FUSION_HOLDING_OSC_V0_ENVIRONMENT.md), [OSC v1](environments/CONTACT_SWEEP_CLUTTER_FUSION_HOLDING_OSC_V1_ENVIRONMENT.md), v2 이후는 해당 Holding 계열 설명 참조 |
+| `OSC-ObjectRandom-v0` ~ `OSC-ObjectRandom-v3` | `envs/contact_sweep_clutter_fusion_holding_osc_object_random_envs.py`; 각각 OSC v0/v2/v3/v4 상속 | [v0](environments/CONTACT_SWEEP_CLUTTER_FUSION_HOLDING_OSC_OBJECT_RANDOM_V0_ENVIRONMENT.md), [v1](environments/CONTACT_SWEEP_CLUTTER_FUSION_HOLDING_OSC_OBJECT_RANDOM_V1_ENVIRONMENT.md), [v2](environments/FUSION_HOLDING_V3_FAMILY.md), [v3](environments/FUSION_HOLDING_V4_FAMILY.md) |
+| `ObjectRandom-Test-v0` | ObjectRandom 계열 파일; Holding v2 상속 | [테스트 환경](environments/CONTACT_SWEEP_CLUTTER_FUSION_HOLDING_OBJECT_RANDOM_TEST_V0_ENVIRONMENT.md) |
+
+Holding v0의 외부 기반 클래스는 코드의 실제 MRO로 확인한다. 이전 계열 코드는 현재 환경의 의존성을 확인할 때만 읽는다.
+
+## 실행
+
+workspace 루트에서 Isaac Lab 의존성이 설치된 Python을 사용한다. 아래는 명령 예시이며 실행 성능 검증 결과가 아니다. 옵션과 설치 절차는 workspace 루트 `README.md`를 따른다.
+
+```bash
+python src/inspire_sweep_baseline/scripts/train.py --task Isaac-Inspire-Final-GoalAccuracy-v0 --num_envs 2048 --headless
+python src/inspire_sweep_baseline/scripts/play.py --task Isaac-Inspire-Final-GoalAccuracy-v0 --num_envs 16 --checkpoint /absolute/path/to/model.pt
+```
+
+학습에는 `train.py`를 사용한다. `train_resilient.py`는 사용 중단 상태로 보존한다. checkpoint의 환경·관측·정책 구성과 현재 task의 호환성을 확인한다.
+
+## 수정·비교 기준
+
+[개발 지침](../00_guidelines/09_DEVELOPMENT_GUIDE.md)에 따라 요청한 버전만 수정하고 부모를 보존한다. 목표 도달은 XY 거리 `d <= r`를 사용한다. 고정값과 커리큘럼 값, EEF 접근 반경을 혼동하지 않는다.
+
+완료 전 등록·상속·Scene·Command·Event·Observation·Action·Reward·Termination·Curriculum·runtime·PPO·로그의 모든 차이를 요청과 대조한다. 특히 커리큘럼의 삭제·대상 term·시점·간격·최종값을 누락하지 않는다. 검증 명령과 미검증 범위는 해당 개발 로그에 남긴다.
+
+이전 환경 목록과 상세 비교는 [정리 전 백업](history/2026-10-27_agent_context/README.md)에 보존했다. 과거 환경 조사 요청이 있을 때만 읽는다.
