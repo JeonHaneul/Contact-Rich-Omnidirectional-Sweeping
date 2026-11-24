@@ -1,0 +1,1654 @@
+# Inspire Sweep Baseline
+
+2026-11-24: **`Inspire-Sweep-Prof-Revision-v0_1`**은 Prof Revision v0 직접 자식으로 `arm_joint_failure` 일회−3.0만 추가한다. Formation 식·weight0.245·Reach10cm·관측·제어·종료·PPO 수치는 부모와 동일하고 로그 이름은 `inspire_sweep_prof_revision_v0_1`이다. [계약·실행](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/PROF_REVISION_V0.md#prof-revision-v0_1) · [검증 기록](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-11-24_prof_revision_v0_1_implementation.md).
+
+2026-11-24: **`Inspire-Sweep-Prof-Revision-v1`**은 Prof Revision v0 직접 자식이다. 팔 속도 종료 일회−3.0을 추가하고 Formation을 손가락별 거리 점수×코사인 제곱의 합으로 변경했다(weight0.3675). Reach10cm·면 선호·관측·제어·종료·PPO 수치를 상속한다. CPU58개·GPU4환경 smoke·16환경 PPO1회 업데이트 통과, 장기 행동 개선은 미검증이다. [계약·실행](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/PROF_REVISION_V0.md#prof-revision-v1) · [검증 기록](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-11-24_prof_revision_v1_implementation.md).
+
+2026-11-24: **`Inspire-Sweep-Prof-Revision-Reach5cm-v0`**는 Prof Revision v0 직접 자식이며 Reaching 허용 반경만10→5cm로 변경한다. 나머지 환경 동작과 PPO 수치는 상속하고 로그 이름만 분리한다. GPU·Sim·학습 없이 정적 검사만 수행했다. [계약·실행](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/PROF_REVISION_V0.md#reach5cm-v0).
+
+2026-11-23: **`Inspire-Sweep-Prof-Revision-v0`** 독립 환경을 추가했다. 초기 가시 OBB·손끝 Pose·증분 Reach·Contact Formation·Sweep100/−20을 사용하며 EEF 높이 접촉 gate를 제거한다. 2026-11-24 정정으로 EEF→손 관절6D→손끝35D 순서를 적용하고 타겟·장애물 OBB 방향을 xyzw quaternion으로 변경했다. 직접108D·장애물176D·encoder176→128→64→32→16·action12D, 기존 계통 checkpoint는 새 입력과 호환되지 않는다. [환경 계약·실행](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/PROF_REVISION_V0.md) · [검증 결과](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-11-23_prof_revision_v0_implementation.md).
+
+2026-11-23: **`Inspire-Sweep-Single-Contact-Zone3-v0`**는 Single Contact v0 직접 자식으로 목표 방향을 Zone3(선반 +X/6시 ±30°)로 제한하고 Sweep 진행/후퇴 weight를100/−20으로 두 배 적용한다. 부모의 중심 거리 Reach·접촉 인정·물체 배치·관측·제어·종료·PPO를 보존하며 로그는 `inspire_sweep_single_contact_zone3_v0`다. CPU 검사66개 통과, 사용자 요청으로 GPU·Isaac Sim·학습은 실행하지 않았다. [계약·실행](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/SWEEP_V0.md#single-contact-zone3-v0) · [개발·검증](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-11-23_single_contact_zone3_v0.md).
+
+2026-11-22: **Sweep v0·Single Contact v0/v1** 공통 손6D를 0~1 비율(0펼침·1굽힘)로 정규화했다. 손 속도 weight −0.03, action-rate raw cap100, action-limit weight −3.0·raw cap10. 기존 rad 출력 checkpoint는 손 의미가 달라 새 학습을 기준으로 사용한다. [계약](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/SWEEP_V0.md#행동과-제어) · [검증](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-11-22_sweep_action_stability.md).
+
+2026-11-21: **`Inspire-Sweep-Single-Contact-v1`**는 Single Contact v0 직접 자식이다. 이동 접근점의5cm 초과 오차 증분 Reach(weight4.9), 구역3의12시 기준 시계방향+15° 단일점, signed 수평 힘 방향(30°/p4), 팔 속도 종료 일회−3을 적용한다. 관측·제어·초기화·성공/종료·기존 면 선호·PPO는 보존하며 로그 이름만 `inspire_sweep_single_contact_v1`이다. [계약·실행](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/SWEEP_V0.md#single-contact-v1) · [검증](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-11-21_single_contact_v1_implementation.md).
+
+2026-11-20: **`Inspire-Sweep-Single-Contact-v0`**는 Sweep v0 직접 자식으로, 최근3 제어 스텝 중2회 접촉 인정 여부를 boolean으로 판정하고 보상에1/0을 사용한다. Contact Count 필드는 없다. 다른 보상·F/T 정규화·설정은 유지한다. 로그 `inspire_sweep_single_contact_v0`. [계약·실행](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/SWEEP_V0.md#single-contact-파생-환경).
+
+2026-11-20: **`Inspire-Sweep-v0` / `inspire_sweep_v0`**는 별도 EnvCfg·PPO·runtime 진입점의 새 계통이다. v2-Test-ActionPenalty-LinearReach를 기능 기준으로 접촉면별 Sweep 계수(1.5/0.7), 고정 장애물·F/T 비용, 관측 전용 F/T 정규화를 적용했다. Deadzone0°·Pull/Push60°·좌우120°. [계약·실행](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/SWEEP_V0.md).
+
+2026-11-20 후속: `Inspire-Sweep-Only-v2-Test-ActionPenalty-LinearReach`는 v2-Test-ActionPenalty의 직접 자식이며 Reach만 weight0.8·10cm plateau·45cm에서0인 선형 근접식으로 교체한다. [계약·실행](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/SWEEP_ONLY_FAMILY.md#linearreach-파생-환경).
+
+2026-11-20 후속: `Inspire-Sweep-Only-v1-ActionPenalty`는 v0의 물체 옆 IK에 v1 Sweep 보상과 ActionPenalty를 적용한다. Reach 없음. [계약·명령](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/SWEEP_ONLY_FAMILY.md#물체-옆-ik와-v1-보상-v1-actionpenalty).
+
+2026-11-20: Sweep Only 6종의 원본을 보존한 `-ActionPenalty` 파생 ID를 추가했다. 팔/손 실행 제한과 클리핑 전 액션 비용을 분리한다. [Task ID·계약·명령](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/SWEEP_ONLY_FAMILY.md#actionpenalty-파생-환경).
+
+2026-11-19: `Inspire-Sweep-Only-v2_2-Test`는 v1_2-Test 직접 자식으로 Deadzone만 **0° 고정**이다. 보상 100/−25·원시 접촉 카운트와 나머지 조건 유지, 로그 `inspire_sweep_only_v2_2_test`. GPU·Isaac Sim 없이 표준 라이브러리 기반 코드 검사를 통과했다.
+
+2026-11-19: `Inspire-Sweep-Only-v1_2-Test`는 v1-Test 직접 자식이다. 접촉 카운트 정규화를 끄고 정방향 100·역방향 −25로 설정하여 동일 상태에서 v1 대비 정방향 40배·역방향 2.5배다. Deadzone 30°와 나머지 조건은 유지하며 로그 이름은 `inspire_sweep_only_v1_2_test`다. CPU 코드 검사만 수행했고 GPU·Isaac Sim·학습은 실행하지 않았다.
+
+2026-11-19: `Inspire-Sweep-Only-v2-Test`는 v1-Test 직접 자식으로 목표 방향 Deadzone만 **0° 고정**이다. 보상 50/−10 및 나머지 구성 유지, 로그 `inspire_sweep_only_v2_test`. 학습 중인 GPU 보호 요청에 따라 GPU·Isaac Sim 실행 없이 CPU 정적 검사만 수행했다.
+
+## 선반·물체 8개 정면 이미지
+
+`scripts/photograph_shelf_front.py`는 현재 Sweep Only의 선반과
+`RevisionObjectSpawnerCfg`를 재사용하는 비학습 촬영 실행기다. 로봇·정책·Extension 없이
+8종을 하나씩 생성하고, 크기0.9–1.1배·yaw·좌우 순서·간격·선반 깊이 위치를 바꾼다.
+8개가 정면에서 서로 가리지 않도록 좌우 투영 간격을 확보하는 촬영용 배치다.
+기존 학습 reset 분포 자체를 재현하는 실행기는 아니다.
+
+```powershell
+conda activate env_isaaclab
+python src/inspire_sweep_baseline/scripts/photograph_shelf_front.py --headless --count 24
+```
+
+기본 출력은 `outputs/shelf_front_24/front_001.png`부터 `front_024.png`까지의
+1920×800 PNG다. 수평 직교 카메라로 촬영하며 카메라의 아래보기·좌우 사선·roll은0도다.
+선반 상판과 물체 윗면을 내려다보지 않는다. 사진용 회색 배경과 고정 조명을 사용한다.
+`contact_sheet.jpg`는 전체 미리보기, `metadata.json`은 seed·자산·자세·scale·카메라와
+이미지 해시, `front_scene_001.usdc`는 첫 장면의 정적 USD다.
+`--seed`, `--output-dir`, `--width`, `--height`로 재생성 조건을 지정할 수 있다.
+동일 폴더에서는 같은 번호의 사진을 덮어쓰므로 다른 세트는 별도 폴더를 지정한다.
+
+부분 가림이 있는 사진은 `--occlusion`으로 생성한다. 기본 출력 폴더가
+`outputs/shelf_front_occluded_24`로 바뀌므로 기존 무가림 사진을 보존한다.
+8종 각1개를 유지하며2–4쌍을 앞뒤로 배치한다. 각 장면의 실제 segmentation mask를
+가리는 물체를 숨긴 비교 렌더와 대조해 부분 가림을 검사하며, 물체 간 bounds의
+관통도 검사한다. 카메라·배경·해상도는 동일하다.
+
+```powershell
+python src/inspire_sweep_baseline/scripts/photograph_shelf_front.py --headless --occlusion --count 24 --seed 20261219
+```
+
+거의 보이지 않는 강한 가림은 `--heavy-occlusion`으로 생성한다. 원래 실루엣의10% 이하만
+보이는 뒤 물체가 각 이미지에 포함되도록 실제 mask로 검사하고 위치를 미세 조정한다.
+기본 출력은 `outputs/shelf_front_heavy_24`이며 기존 두 세트는 유지된다.
+
+```powershell
+python src/inspire_sweep_baseline/scripts/photograph_shelf_front.py --headless --heavy-occlusion --count 24 --seed 20261319
+```
+
+[구현·산출물 검증 기록](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-11-19_shelf_front_photography.md).
+
+## 로봇 연결부 촬영 — 학습 없음
+
+`scripts/photograph_robot.py`는 Sweep Only/Finger와 같은 오른손 RH56E2 자산과
+Axia80 조립 함수를 사용한다. 선반·물체·정책·보상 없이 UR5e–Axia80–RH56E2만
+배치하고, 고정 자세에서 카메라를 움직여 촬영한다. 기존 Gym 환경은 변경하지 않는다.
+
+Workspace 루트에서 실행한다.
+
+```powershell
+conda activate env_isaaclab
+python src/inspire_sweep_baseline/scripts/photograph_robot.py
+```
+
+GUI의 **Robot Photography** 패널에서 구도를 고르고 뷰포트를 마우스로 조정한 뒤
+**Save current viewport PNG**를 누른다. 마우스 조작은 Isaac Sim 기본 뷰포트의
+Alt+왼쪽 드래그(회전), 가운데 드래그(이동), 휠(확대/축소)을 사용한다.
+수동 사진은 `manual_<날짜_시간>.png`로 저장하며 UI 패널은 사진에 포함되지 않는다.
+
+실행할 때 `outputs/robot_photography`에 다음 기본 파일을 생성한다. 같은 출력 폴더의
+기본 파일은 다시 생성하므로 별도 촬영 세트에는 `--output-dir`을 지정한다.
+
+| 파일 | 구도·내용 |
+| --- | --- |
+| `assembly_closeup.png` | UR5e 손목–Axia80–오른손 연결부와 손 전체 |
+| `assembly_reverse.png` | 반대편에서 본 손바닥·연결부 |
+| `assembly_isolated.png` | 근위부 팔 링크를 숨긴 손목·센서·손 |
+| `mount_detail.png` | 실린더 양쪽 체결부 확대; 손가락 끝은 프레임 밖 |
+| `robot_overview.png` | 전체 UR5e와 센서·손 |
+| `robot_photo_scene.usdc` | 실제 관절 자세를 저장하고 물리를 비활성화한 촬영 장면 |
+| `metadata.json` | 원본 자산, 관절 자세, 센서 치수, 카메라 위치·해상도 |
+
+PNG 기본 해상도는 1920×1440이다. USD는 Isaac Sim에서 직접 열고 뷰포트 카메라를
+`PhotoCamera`로 선택해서 사용할 수도 있다. 전체 팔 메시도 장면에 포함되어 있으며,
+클로즈업에서 숨겨진 근위부 링크는 Stage에서 다시 표시할 수 있다.
+
+GUI 없이 파일만 생성하려면 다음 명령을 사용한다.
+
+```powershell
+python src/inspire_sweep_baseline/scripts/photograph_robot.py --headless --capture-only
+```
+
+초기 관절 계산을 위해 중력 없는 물리 1스텝만 수행한 뒤 렌더만 갱신한다.
+촬영용 USD에는 rigid body와 joint를 비활성화한 자세가 저장된다. 로봇의 치수·메시·
+연결 방식을 수정하지 않으며 Axia80은 원본과 같은 지름82mm·높이25.4mm 실린더다.
+[구현·검증 기록](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-11-19_robot_photography.md).
+
+2026-11-19: `Inspire-Sweep-Only-v1-Test`를 `Inspire-Sweep-Only-v0-Test` 직접 자식으로 추가했다. `sweep_progress=50`, `sweep_retreat=−10`만 변경하며 로그 이름은 `inspire_sweep_only_v1_test`다. 부모의 30/−20과 나머지 환경은 유지한다.
+
+2026-11-19 후속: Sweep Only 일반·Test의 `sweep_retreat` weight를 −38.91에서 **−20**으로 변경했다. 정방향 weight 30과 거리 식은 유지하고 Stabilize 두 환경은 기존 −38.91을 유지한다.
+
+2026-11-19 후속: Sweep Only 일반·Test의 Phase 관측과 압착 페널티를 제거했다. 내부 단계 상태는 유지하고 Actor·Critic 직접 입력은 66D, obstacle 입력 64D, export 130D다. Stabilize는 변경하지 않았다. 기존 67D 체크포인트와 직접 호환되지 않는다. [상세 설명](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/SWEEP_ONLY.md).
+
+2026-11-19: Stabilize/Sweep Only 일반·Test 네 환경의 센서·제어·관측·보상·종료를 검토하고 상태 생성·표면점 저장 중복을 정리했다. `clip_actions=π/2` 유지, 실제 접촉 높이 설정은 `sweep_contact_height_limit=0.12`다. CPU 211개·네 ID GPU 통합 검사 통과. Test 초기 로봇 공간 미검사 등 차이는 [검토 기록](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-11-19_stabilize_family_audit.md), 일반 IK·Gate 없는 구성은 [Sweep Only 상세 설명](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/SWEEP_ONLY.md)에 정리했다.
+
+2026-11-19: 일반 `Inspire-Sweep-Only-v0`의 물체 옆 초기화를 가속했다. RTX3090·2048환경·headless·seed42·32회 모두 collection10초 미만(collection 중앙값8.322초·최대9.579초). 실제 hull 충돌 기준·밀기 반대편 손·RED·로봇 비겹침을 유지하면서 충돌 전처리·FK·장애물 선택을 GPU에서 처리한다. 보상·관측·PPO는 유지한다. [원인·변경·검증](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-11-19_sweep_only_ik_performance.md).
+
+2026-11-19 후속: 일반 `Inspire-Stabilize-Sweep-v0`와 `Inspire-Sweep-Only-v0`에도 공통 성능 개선을 적용했다. 기존4후보 IK·충돌 검사·실패 행 복구는 유지하며, Test의 단일 IK나 Reach로 교체하지 않는다. [적용 범위·검증](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-11-19_stabilize_parent_performance.md).
+
+2026-11-19: 두 `-Test`의 실제2048환경·headless 학습32회가 모두10초 미만으로 완료됐다(RTX3090·seed42). Stabilize Test 중앙값8.81초/최대9.44초, Sweep Only Test8.69초/9.18초. 대표점·배치·reset 계산을 개선했으며 관측 규칙·보상·horizon36·PPO8×4를 유지한다. 최초 시뮬레이터 생성은 iteration 시간에서 제외한다. [변경·실행·검증·한계](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-11-18_stabilize_sweep_performance.md).
+
+2026-11-18: `Inspire-Stabilize-Sweep-v0-Test`와 `Inspire-Sweep-Only-v0-Test`는 각각 원본을 상속하고 초기 배치·IK만 기존 Finger 방식으로 교체한다. 대표 표면점 관측을 유지하고, 후속 요청으로 Test에만 Finger Reach(weight30)를 추가했다. 나머지 부모 보상/Gate는 유지한다. [차이와 실행](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/STABILIZE_SWEEP.md#finger-초기화-test-환경).
+
+두 Test는 대표 표면점 계산, 배치 처리, 고정 local COM 읽기 캐시와 중복 reset 기록을 최적화한다. 비활성 물체와 고정 로봇 베이스는 실제 PhysX 위치·자세·속도가 요청값과 수치적으로 정확히 같은 경우에만 중복 기록을 생략한다. 비활성 물체의 주차 위치는 높이52–82m에서 환경 기준 +X3m부터 시작하는 간격45cm의 4×4 격자(각 slot의 활성 초기 배치와 같은 선반 좌표계 Z 유지)로 옮겨, 활성·비활성 전환 시 GPU 충돌 후보 정렬 비용을 줄인다. 표면점 fallback도 같은 주차 공간을 사용한다. 이 공간은 로봇의 보수적 도달 반경과 정상 작업 영역에서 떨어져 있으며 기존 환경 간 충돌 필터를 유지한다. 비정상적인 고속 발사 물체와의 접촉까지 불가능하다는 보장은 아니다. 활성 물체의 초기화 분포·난수 진행·IK·관측·보상·물리 설정·PPO 구성은 유지하며, 원본 Finger의 기본 경로는 보존한다. 후속 요청으로 일반 Stabilize/Sweep-Only에도 공통 관측·COM cache·주차·중복 기록 생략을 적용했다. 일반 배치는 로봇 점유 공간 검사를 유지하며256행 단위의 GPU 영역 검사와 셀 선택을 사용한다.
+
+2026-11-18: `Inspire-Sweep-Only-v0`는 `Inspire-Stabilize-Sweep-v0`를 상속해 안정화 보상·전용 초기 이동/회전 비용과 Gate를 제거한다. 초기화 직후부터 Sweep을 적용하며 압착 비용과 나머지 구성은 유지한다. [환경 차이·실행 명령](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/STABILIZE_SWEEP.md#sweep-only-파생-환경).
+
+2026-11-11: `Inspire-Sweep-Simple-Finger-v1`은 Finger-v0의 정책 출력·입력 범위와 속도 비용/종료를 변경하고 Last Action tanh를 제거한다. 이를 상속하는 `Inspire-Sweep-Simple-Finger-v2`는 로그 Distance·2cm/3초 달성 후 후퇴 Reach·gate 기반 Contact/성공을 적용한다. [계약·실행](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/SWEEP_SIMPLE_ENVIRONMENTS.md#finger-v1v2-출력-범위와-정밀-이동후퇴).
+
+2026-11-10: 병렬 정책 평가를 위한 원시 로그 수집·데이터 추출·플롯 실행기를 추가했다. Timeout 최종 분포(전체/6방향), 생성 목표, 움직임 중 Contact 비율을 반복 수집한다. [실행 명령과 데이터 계약](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/SWEEP_EVALUATION.md).
+
+2026-11-10: `Inspire-Sweep-Simple-Finger-v0`는 Simple-v1을 상속해 손의 실제 구동관절6D 관측·독립 절대 관절 위치6D 제어를 사용한다. Last Action tanh 유지, 전체 액션12D·원시 관측130D. [Simple 계열 설명](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/SWEEP_SIMPLE_ENVIRONMENTS.md#finger-v0-독립-손가락-제어).
+
+2026-11-09: **`Inspire-Wrench-Refactor-Relative-IK-v0_2_2_6`**는 v0_2_2_4 직접 상속으로 Reach만 현재3D 중심의 지속 근접 보상으로 변경한다. v0_2_2_4부터 timeout/success 집계를 최근10,000개 완료 에피소드로 변경했다. [계약·실행·검증](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-11-09_relative_ik_v0_2_2_6.md).
+
+2026-11-09: **`Inspire-Wrench-Refactor-Relative-IK-v0_2_2_5`**는 v0_2_2_4 직접 상속. 접촉 조건부 policy step 접근120·방향 이탈−6, 후퇴−25.94 유지, 접촉 유지 보상 삭제. [계약·실행·검증](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-11-09_relative_ik_v0_2_2_5.md).
+
+2026-11-11: 물체 스폰 영역 시각화는 Simple/Relative-IK 양쪽에서 삭제했다. 실제 스폰 배치 로직은 유지한다. [삭제 기록](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-11-11_remove_spawn_region_visualization.md).
+
+2026-11-09: **`Inspire-Wrench-Refactor-Relative-IK-v0_2_2_4`**는 v0_2_2_3-Fast-Test 직접 상속. 물체 가속도 비용/일정 제거,10초 timeout 중 XY 거리<3cm 성공률 기록. [계약·실행·검증](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-11-09_relative_ik_v0_2_2_4.md).
+
+2026-11-09: **`Inspire-Wrench-Refactor-Relative-IK-v0_2_2_2-Test`**는 v0_2_2_1-Test를 직접 상속하고, 목표에서 멀어진 XY 거리에만 역방향 페널티(weight -25.94)를 추가한다. [계약·검증](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-11-09_relative_ik_v0_2_2_2_inverse_distance.md).
+
+2026-11-09: **`Inspire-Wrench-Refactor-Relative-IK-v0_2_2_1-Test`**는 v0_2_2-Test를 직접 상속한다. Contact의 2-of-3 판정은 유지하고 카운트 초기화만 5회에서 1회 불인정으로 변경한다. [계약·검증](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-11-09_relative_ik_v0_2_2_1_contact.md).
+
+2026-11-09: **`Inspire-Wrench-Refactor-Relative-IK-v0_2_2-Test`**는 일반 v0_2_1-Test를 상속하며 Contact만 타겟 전용 유지 카운트(weight0.1)로 변경한다. Contact의 EEF 높이는 초기 선반 표면 위15cm 미만으로 제한하며, 목표 점유 접촉 간주는 없다. Reset-Test 방식은 잠정 보류한다. [계약·검증](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-11-09_relative_ik_v0_2_2_contact.md).
+
+2026-11-09: **`Inspire-Wrench-Refactor-Relative-IK-v0_2_1-Reset-Test`**는 v0_2_1-Test의 초기화 비교 환경이다. 크기 그룹별 배치·목표·IK를 공유/교체하며 질량·관성·마찰은 매 reset 갱신한다. [설정·실행·검증](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-11-09_relative_ik_reset_test.md).
+
+2026-11-09: **`Inspire-Wrench-Refactor-Relative-IK-v0_2_1-Test`**는 v0_2-Test 직접 상속. object를 기울기/변위로 분리하고 EEF·타겟 속도 비용과 일정을 제거한다. 두 환경 모두 목표 거리·속도 Metrics를 기록한다. [환경 계약·실행](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/WRENCH_REFACTOR_RELATIVE_IK_V0_2_TEST_ENVIRONMENT.md).
+
+2026-11-09: **`Inspire-Wrench-Refactor-Relative-IK-v0_2-Test`** 독립 환경. IK-v0_1 Scene·제어·대칭 관측과 Holding OSC v2 보상, 고정3cm·성공 종료 제거. [환경 계약·실행](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/WRENCH_REFACTOR_RELATIVE_IK_V0_2_TEST_ENVIRONMENT.md).
+
+Relative 활성 환경은 **v0·v2·v2_1·v3**다. v0부터 Axia 질량280g을 공통 적용한다. 타겟·목표·장애물·F/T는 EEF 기준이며 EEF pose만 Base 기준이다. Relative-v1은 삭제했고 기존 학습 로그는 보존한다.
+
+`Inspire-Wrench-Refactor-Relative-v2_1`은 v2 직접 상속으로 **거리 항만 시작→목표와 시작→현재의 XY 누적 변위 cosine**으로 교체한다. 기존 거리 증가 페널티−12.97, 성공 보상·종료와 나머지 v2 설정은 유지한다. 아래 실시간 이동 cosine 공통 설명에서 v2_1만 이 예외를 적용한다. [계약](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/WRENCH_REFACTOR_RELATIVE_V2_ENVIRONMENT.md#relative-v2_1-시작점-기준-누적-변위-cosine).
+
+2026-11-07 후속: 공통 cosine은 현재→목표 방향과 실시간 이동 벡터를 비교하며, 이동 기준 위치는XY1mm 이상일 때만 갱신한다. 매step 거리 증가량에는 `target_inverse_distance = −12.97×max(d_t−d_(t−1), 0)`을 적용한다. v3는 최초 진입·목표 유지·성공 보상과 성공 종료를 제거하여 실패가 없으면10초 timeout까지 진행한다. [변경·검증](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-11-07_relative_motion_rewards.md).
+
+- [Relative-v0](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/WRENCH_REFACTOR_RELATIVE_V0_ENVIRONMENT.md): Actor/Critic 모두 초기 타겟, 별도 접촉 유지와 cosine 거리 보상.
+- [Relative-v2](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/WRENCH_REFACTOR_RELATIVE_V2_ENVIRONMENT.md): v0 직접 상속. Actor 초기 타겟, Critic 현재 타겟만 변경.
+- [Relative-v3](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/WRENCH_REFACTOR_RELATIVE_V3_ENVIRONMENT.md): v0 직접 상속. 접촉 유지 보상 삭제, 현재 접촉 조건부 cosine 거리 보상(weight25).
+
+Arm 물리 속도3.14rad/s, effort150/150/150/28/28/28Nm, 종료 임계값4.0→2.0rad/s 커리큘럼은 공통 유지한다. [최종 검증](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-11-06_relative_family_280g_v3.md).
+
+2026-11-07부터 Relative-v0 및 하위 v2/v3의 최종 F/T 관측에 힘 각 축±150N·모멘트 각 축±8N·m 한도를 적용한다. 질량·관성 보정과 noise 이후 관측만 제한하며 보상/진단용 wrench는 유지한다. raw Arm/기존 clamp Hand Action Rate에는 그룹별 제곱합 cap100을 적용한다. [구현·CPU/GPU 검증](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-11-07_relative_observation_action_limits.md).
+
+
+```bash
+python src/inspire_sweep_baseline/scripts/train.py --task Inspire-Wrench-Refactor-Relative-v0 --num_envs 2048 --headless
+```
+
+## Refactor 수동 조작
+
+`wrench_refactor_envs.py:WrenchRefactorEnvCfg`의 오른손·선반·17개 물체·손가락 2D 제어를 사용하는 실행기다. Arm은 같은 Refactor v3의 EEF 보정 OSC를 재사용한다. 체크포인트 없이 한 환경을 띄우며, 기존 학습 환경 정의는 변경하지 않는다. Workspace 루트의 Isaac Lab Python에서 실행한다.
+
+```bash
+env -u PYTHONPATH -u ROS_PACKAGE_PATH -u AMENT_PREFIX_PATH \
+  python \
+  src/inspire_sweep_baseline/scripts/manual_wrench_refactor.py
+```
+
+Isaac Lab Python이 활성화된 다른 PC에서는 `python src/inspire_sweep_baseline/scripts/manual_wrench_refactor.py`로 실행한다. 원래 선반의 로컬 복사본을 쓰려면 `--shelf-usd /path/to/speedrack_shape.usd`를 추가한다.
+
+**Wrench Refactor - Manual Control** 창에서 world 기준 XYZ(m)·RPY(deg)를 입력하고 **Apply XYZ / RPY**를 누른다. 축별 ± 버튼은 기본 5mm/2°씩 목표를 바꾼다. 두 Hand 슬라이더는 즉시 적용되며, 각각 손가락 굽힘과 엄지 opposition의 openness(0 닫힘, 1 열림)다. EEF 목표는 기존 OSC에 전달하며, 목표 궤적은 기본 0.04m/s·0.4rad/s로 변화시킨다. 이는 실제 로봇 속도의 보장값이 아니다.
+
+| 버튼 | 동작 |
+| --- | --- |
+| Reset ALL | 로봇 초기 자세 + 새 선반 배치·목표 + 새 복원 지점 |
+| Reset SHELF | 선반·물체·목표만 새로 초기화하고 복원 지점 갱신; 로봇 유지 |
+| Restore shelf snapshot | 저장된 선반·물체 위치/자세/속도·활성 구성·목표 복원; 로봇 유지 |
+| Save shelf snapshot | 현재 선반 상태를 새 복원 지점으로 저장 |
+| Reset ROBOT pose | 로봇 초기 자세·속도 0·손 열림; 선반·물체·목표·복원 지점 유지 |
+| Hold actual EEF | EEF 목표를 현재 실제 자세로 교체 |
+| Pause / Resume physics | 물리 일시정지·재개 |
+
+Reset과 복원 직후에는 물리가 일시정지되므로 **Resume physics**로 재개한다. 최초 실행과 전체/선반 reset 때 복원 지점을 자동 저장하며, 선반 내 조작 후 **Restore shelf snapshot**을 반복해서 눌러 조작 전 상태로 돌아갈 수 있다. 새 배치를 만들면 이전 복원 지점은 교체된다. 물리 solver의 내부 contact cache까지 저장하는 결정적 replay는 아니다.
+
+수동 실행은 ActionManager와 물리만 진행한다. 학습용 보상·종료·시간 제한·커리큘럼 step을 실행하지 않아, 실패하거나 10초가 지나도 장면이 자동으로 교체되지 않는다. 패널 또는 앱을 닫아 종료한다. 실행과 검증 상세는 [개발 로그](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-11-06_wrench_refactor_manual.md)를 따른다.
+
+2026-11-06: Refactor `v0_1/v1_1/v2_1/v3_1`은 각각 원본v0–v3를 직접 상속하며 Action Rate를 상한 없는 raw 정책 출력 변화 비용으로 교체한다. [등록·계약·실행](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/WRENCH_REFACTOR_POLICY_RATE_ENVIRONMENTS.md).
+
+2026-11-06: `Inspire-Wrench-Refactor-v3-Test`는 v3를 직접 상속한 왼쪽(world −Y) 목표 전용 임시 환경이다. [계약·실행·검증](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-11-06_wrench_refactor_v3_test_left.md).
+
+2026-11-06 Refactor-v0/v1/v2/v3 공통: 목표 중심은 물체 시작점에서 **6–12cm**, 허용 방위 균등·거리 균등으로 샘플링한다. [최종 영역·검증](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-11-06_wrench_refactor_goal_annulus.md).
+
+2026-11-06: **Refactor-v2←v0**로 정정(접촉 보상 별도·거리weight5×cosine). **Refactor-v3←v2**는 EEF 기준 OSC를 사용한다. [v3 계약](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/WRENCH_REFACTOR_V3_ENVIRONMENT.md).
+
+2026-11-06 Refactor 기반 후속: v0/v1/v2는 Final·Revision과 동일한 **root-frame OSC**를 사용하며 목표 최소 거리는 **시작점에서5cm**다. 오른손 자산과 EEF offset은 유지한다. [변경·검증](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-11-06_wrench_refactor_root_osc_min_goal.md).
+
+2026-11-06: **Inspire-Wrench-Refactor-v2**는 v0을 직접 상속하고 거리 보상에 시작점 기준 XY 누적 변위 코사인을 곱한다. 별도 접촉 보상·높이 조건과 거리weight5는 유지한다. [환경 계약](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/WRENCH_REFACTOR_V2_ENVIRONMENT.md).
+
+2026-11-06: **Inspire-Wrench-Refactor-v1**은v0직접상속으로 `target_contact` 유지보상을제거하고거리보상에현재step접촉조건(.01N)을추가한다. weight5→25,EEF14cm제한유지. [환경 계약](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/WRENCH_REFACTOR_V1_ENVIRONMENT.md).
+
+2026-11-05: **`Inspire-Wrench-Refactor-v0`** 독립 CFG/runtime: 오른손 ZIP 원본,8종×2장애물+원통타겟의17개 고정풀,초기 균등 물성 고정,목표 방향/거리 균등,앞뒤 tactile34,Actor/Critic raw74→MLP90. [전체 계약·실행·변경 대조](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/WRENCH_REFACTOR_V0_ENVIRONMENT.md). CPU160개/오른손USD/실제 설정 import 및 GUI32환경 검증 통과. 2026-11-06 후속으로 Wrist3−π/2·관절속도 종료3rad/s를 적용했다. 7168reset,140만 방위샘플,32/32 목표도달·21/32 안정유지 성공과 센서/보상 기록은 [GUI 시험 결과](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-11-06_wrench_refactor_gui_validation.md)를 따른다. 초기 GPU부재 판단은 sandbox 접근 제한으로 정정했고2048환경/학습은 미검증이다.
+
+2026-11-05: [Wrench v0 계열 상세 명세](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/WRENCH_V0_FAMILY_ENVIRONMENTS.md)는 v0·v0_1·v0_2·v0_3·v0_4의 공통 환경 전체와 버전 차이를 설명한다. 관측·액션·15개 보상·커리큘럼·종료·reset·PPO·로그 해석 및 검증 한계를 포함한다.
+
+2026-11-05: `Inspire-Wrench-v0_3`는 v0_2를, `Inspire-Wrench-v0_4`는 v0_3을 직접 상속한다. v0_3은 장애물0–4 균등·속도 기준0.02 고정·EEF14cm·OSC 출력 토크 정규화 변화량·최초 진입4cm/s, v0_4는 높이 조건이 있는 최단 거리 개선량을 적용한다. CPU103개 통과, GPU/학습 미실행. [환경·실행 계약](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/WRENCH_V0_3_V0_4_ENVIRONMENTS.md).
+
+2026-11-05: `Inspire-Wrench-v0_2`는 v0 직접 상속 feasibility 환경이다. 거리×cosine(3cm 미만1, 접촉 조건 없음), 2-of-3 접촉 누적·불인정5회 초기화, 초기 무장애물·2k부터3k 교대 증가·reset±1 랜덤화를 적용한다. CPU87개 통과, GPU/학습 미검증. [환경·실행 계약](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/WRENCH_V0_2_ENVIRONMENT.md).
+
+2026-11-04: `Inspire-Wrench-v0_1`은 v0 직접 상속 feasibility 환경이다. 독립 contact 보상을 제거하고 거리 보상에 연속 접촉·cosine을 적용한다. 거리3cm 미만 alpha=1, deadzone40° 고정, 목표 허용 거리4.0–7.5cm다. CPU78개 통과, GPU/학습 미검증. [계약·실행](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/WRENCH_V0_1_ENVIRONMENT.md).
+
+2026-11-04: `Inspire-Wrench-v2`는 v1을 직접 상속하고 Arm 목표/보정 후 명령 범위만1/10로 줄인다: ±10N/±0.5Nm, 보정 후 ±12N/±0.6Nm. 축소 범위 기준 action-rate 정규화·Hand·나머지 환경은 유지한다. [v2 상세](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/WRENCH_V0_V1_ENVIRONMENT.md#13-inspire-wrench-v2-v1의-arm-범위를110로-축소).
+
+[Wrench-v0 전체 환경과 Wrench-v1 변경점 — 최종 통합 명세](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/WRENCH_V0_V1_ENVIRONMENT.md): 초기화/reset 랜덤화, Actor/Critic 관측, 액션, 보상15항, 커리큘럼, 성공·실패, PPO와 최신 wrench 제어 설정.
+
+2026-11-04 후속: Wrench-v1의 robot_action_rate_penalty는 Arm Desired Wrench를 정책 목표 범위로 정규화한 [-1,1] 변화량을 사용한다. Hand raw 계산과 계수는 유지하며 CPU44개 통과. v0는 보존했다.
+
+2026-11-04: `Inspire-Wrench-v1`은 Wrench-v0 직접 상속이며 arm OSC만 sensor-center6축 closed-loop wrench 제어로 변경한다. `wrench_abs`, motion축0/wrench축1, gain0.2, 명령목표 ±100N/±5Nm, 보정 후 명령 제한 ±120N/±6Nm, gravity보상을 사용한다. 기존 Scene·관측·보상·PPO는 유지한다. [파라미터·프레임·실행 계약](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/WRENCH_V1_ENVIRONMENT.md). CPU80개 통과, 실제 GPU 추종/학습은 미검증.
+
+2026-11-04: `Inspire-Wrench-v0`는 Test-v2를 기능 기준으로 한 독립 환경이다. 높이120mm·3cm/0.005m/s 연속3초 성공(+75)·RED20mm 확장/후방 Gray20mm 후퇴·startup 배치 bank/물성 고정·10k 시작3k 간격 Dead Zone을 적용한다. CPU82개 통과, GPU collection1~2초는 미검증이다. [환경 계약·실행](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/WRENCH_V0_ENVIRONMENT.md).
+
+2026-11-03: `Isaac-Inspire-Revision-Test-v2-GT`는 Test-v2를 직접 상속하며 Actor에 실시간 타겟 XYZ3D만 추가한다. Actor의 초기 장애물 관측과 Critic·보상·PPO는 유지한다. [GT 관측 계약·실행 명령](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/REVISION_V2_ENVIRONMENT.md#test-v2-gt-실시간-타겟-위치-대조-실험).
+
+2026-11-03: `Isaac-Inspire-Revision-v2` / `Isaac-Inspire-Revision-Test-v2`를 추가했다. v1→v2→Test 직접 상속이며 거리·Hold·접촉에 EEF95mm 미만 조건, Smoothstep Hold weight10, 속도 감쇠 최초 진입 최대+25, timeout+75, free acceleration15m/s²를 적용한다. Test는 타겟 형상만 cylinder다. [구현 계약·학습 명령](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/REVISION_V2_ENVIRONMENT.md) · [검증 기록](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-11-03_revision_v2_implementation.md).
+
+2026-11-02: `Isaac-Inspire-Revision-v1`과 `Isaac-Inspire-Revision-Test-v1`을 추가했다. v0 직접 상속으로 비용 3분리·10k 고정값·교대 장애물 증가·3cm 내부 Hold·최초 진입 +30/timeout +40을 적용하고, Test는 타겟 형상만 cylinder로 고정한다. [구현 계약과 학습 명령](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/REVISION_V1_ENVIRONMENT.md) · [리뷰·검증 기록](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-11-02_revision_v1_implementation.md).
+
+2026-10-31 추가: [GoalAccuracy v0_2_2](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/FINAL_GOAL_ACCURACY_V0_2_2_ENVIRONMENT.md)는 v0_2_1을 보존한 새 환경이다. 물리 객체를 환경당 36→12개로 줄이고, 초기 형상 prototype·물리 재질을 재사용하며 reset에서 타겟/장애물 역할을 텐서로 재할당한다. 보상·관측·OBB 배치·Gray 4/White 5 일정은 유지한다. 환경별 보유 형상은 초기 생성 때 정해지므로 단일 환경의 타겟 후보 지원 범위는 부모와 다르다. [검증·성능 비교·제한](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-31_final_v0_2_2_compact_scene.md).
+
+2026-10-31 추가: [OBB 텐서 배치 모듈](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/BBOX_SCENE_LAYOUT.md)을 **FinalGoalAccuracyV0_2_1EnvCfg reset에 적용**했다. 물체별 회전 Bounding Box, RED/Gray/White, 최소 20mm 간격, Gray padding 및 제한 탐색의 최다 배치를 사용한다. Gray 2500 / White 2000부터 각 1000마다 증가하여 4/5에서 멈추며, 다른 환경은 유지한다. 회귀·기하 106개 및 실제 GPU reset 검증을 통과했다. [연결·검증 기록](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-31_final_v0_2_1_obb_reset.md). 독립 생성기 측정은 `scripts/benchmark_bbox_layout.py`를 사용한다.
+
+2026-10-30 후속: GoalAccuracy **v0·v1·v0_1·v0_2·v0_3 모두** 장애물 요청 수를 5000 iteration 수준인 **Gray 4 + White 5**로 제한한다. 5000 이후 물체 수는 증가하지 않는다. 기존 증가 시작·간격, 물체 용량과 관측 슬롯, 다른 커리큘럼은 유지한다. 이미 실행 중인 프로세스는 코드 변경을 자동 반영하지 않으므로 변경된 코드로 재시작/재개해야 적용된다. [변경·검증 기록](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-30_goal_accuracy_population_cap.md).
+
+2026-10-27 추가: `Isaac-Inspire-Final-GoalAccuracy-v1`은 Accuracy v0를 상속하여 1cm 고정 목표를 유지하고 Final v1의 외곽 `goal_hold`와 `goal_speed_scale`을 복원한다. `object_free_speed`는 이미 활성인 v0 구성을 상속한다. weight 8·장애물 증가 일정·계측은 v0 유지. [환경 계약·Final v1 전체 대조](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/FINAL_GOAL_ACCURACY_V1_ENVIRONMENT.md).
+
+2026-10-27 추가: `Isaac-Inspire-Final-GoalAccuracy-v0`는 Final v1을 상속해 목표 XY 거리의 체류·접촉 간주·만료 성공 기준을 처음부터 `d ≤ 1cm`로 고정한다. 유효한 목표 점유 중에는 Final-v1과 같이 EEF–타겟 3D Reaching 인정 반경을 10cm에서 1m로 넓힌다. 타겟 속도 페널티는 이름만 변경하고 Final-v1의 수치·커리큘럼을 유지한다. 학습 지표는 `Metrics/` 아래에 기록한다. [독립 상세 명세](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/FINAL_GOAL_ACCURACY_V0_ENVIRONMENT.md) · [환경 계약·실행](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/FINAL_V1_V2_ENVIRONMENTS.md#final-goalaccuracy-v0--1cm-정확도) · [검증 로그](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-27_final_goal_accuracy.md).
+
+2026-10-27 추가: `Isaac-Inspire-Final-Test-v1`은 Final v1의 `object_penalty`를 기울기·장애물 변위·가속도 세 로그 term으로 분리한다. 합산 보상·커리큘럼·정책 입력은 v1과 같고, PPO 로그는 `inspire_final_v1_test`로 분리한다. [계약·체크포인트 재개 명령](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/FINAL_V1_V2_ENVIRONMENTS.md#final-v1-test--object_penalty-세-항-분리) · [검증 기록](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-27_final_v1_test_object_penalty.md).
+
+Final v1의 3000·9500 checkpoint 보상 내부 분해와 동일 seed·커리큘럼 교차 재생은 [진단 실행·제약](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-27_final_v1_reward_play_diagnostics.md)을 따른다.
+
+2026-10-27 추가: `Isaac-Inspire-Final-v1-1`은 Final v1을 직접 상속하고 Goal Distance만 XY 거리 기반 `1.5·exp(-d/0.05)`의 매 step 보상으로 변경한다. [수식·실행](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/FINAL_V1_V2_ENVIRONMENTS.md#final-v1-1--goal-distance-지수형-근접-보상) · [검증 로그](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-27_final_v1_1_goal_proximity.md).
+
+2026-10-26 추가: `Isaac-Inspire-Final-v1` → `Isaac-Inspire-Final-v2`. Final v0를 상속하여 Hand 관측2D·보상 병합·10초 성공 분류·물체 다양화와±10% 크기·20슬롯 배치 fallback을 추가한다. v2는 중앙80%의 안전영역에서 타겟을 추출한다. [환경 계약·train/play](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/FINAL_V1_V2_ENVIRONMENTS.md) · [검증·실행 제한](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-26_final_v1_v2.md).
+
+2026-10-26 추가: `Isaac-Inspire-Final-v0`. ObjectRandom-v3와 같은 동작을 독립 Env·Scene·Manager·PPO CFG와 runtime으로 구성했다. 기존 task CFG의 상속·생성 없이 계산 함수와 실행 구성요소를 재사용한다. [구성·train/play](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/FINAL_V0_ENVIRONMENT.md) · [CPU 검증·GPU 실행 제한](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-26_final_v0.md).
+
+2026-10-25 추가: `Holding-v4` → `Holding-OSC-v4` → `Holding-OSC-ObjectRandom-v3`. success 종료·goal hold 지급 시간 상한을 제거하고 중심 정지 보상을 2배로 강화했다. goal 반경 안에서는 reaching 인정 반경을 0.10→1.0m로 완화한다. OSC 제어·ObjectRandom 규칙은 이전 버전과 같다. 임시 success print는 주석 처리했다. [상속·보상·train/play 명령](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/FUSION_HOLDING_V4_FAMILY.md) · [검증·한계](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-25_fusion_holding_v4.md).
+
+2026-10-24 후속: `Holding-OSC-ObjectRandom-v2`는7/7 반복 배치 검사 실패에 따라 **커리큘럼 최대치를 Gray6/White6**으로 변경했다. White11000·Gray12000에서 도달한다. 물리8/8·관측16슬롯은 유지한다. [반복 검사와 한계](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-24_object_random_v2_population_cap.md).
+
+2026-10-24 추가: `Isaac-Inspire-Contact-Sweep-Clutter-Fusion-Holding-v3` → `Isaac-Inspire-Contact-Sweep-Clutter-Fusion-Holding-OSC-v3` → `Isaac-Inspire-Contact-Sweep-Clutter-Fusion-Holding-OSC-ObjectRandom-v2`. Holding은 goal hold를 에피소드 누적3초까지 지급하고, OSC는 현재v2 제어를 재사용한다. ObjectRandom은3000부터1000 iteration마다 장애물을 교대 추가하며6000~12000의250간격으로 Gray 영역을 Red 방향 최대15%(기존Red 반경 기준1.545cm) 확장한다. [상속·수치·train.py 실행](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/FUSION_HOLDING_V3_FAMILY.md) · [검증·미검증 범위](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-24_fusion_holding_v3.md).
+
+> 현재 학습 실행 정책(2026-10-23): `scripts/train.py`를 사용한다. `train_resilient.py`는 복구 후에도 학습 중단이 반복되어 사용을 중단했으며 코드는 보존한다. 아래의 기존 자동 복구 설명·명령은 과거 이력이다. [학습 실행 정책](../../example/Contact-Rich-Manipulation-Context/00_guidelines/09_DEVELOPMENT_GUIDE.md#학습-실행-정책).
+
+[활성 환경·상속·실행 안내](../../example/Contact-Rich-Manipulation-Context/02_implementation/08_ACTIVE_ENVIRONMENTS.md) · [개발 지침](../../example/Contact-Rich-Manipulation-Context/00_guidelines/09_DEVELOPMENT_GUIDE.md)
+
+## Windows의 Isaac Sim 5.1 실행
+
+`scripts/play.py`와 `scripts/train.py`는 Windows + Isaac Sim 5.1에서 D3D12를 기본 사용한다. Isaac Lab experience가 Vulkan을 켜면 일부 NVIDIA 드라이버에서 환경 생성 전에 `rtx.scenedb.plugin.dll` 접근 위반으로 종료되기 때문이다. 별도 옵션 없이 기존 실행 명령을 사용하면 된다. 명시한 `--kit_args`의 렌더러 선택은 우선하며 Linux와 다른 Isaac Sim 버전은 변경하지 않는다.
+
+다른 실행기에서 동일 증상을 확인할 때는 `--kit_args="--/app/vulkan=false"`를 전달한다. 기본 선반 서버 `omniverse://192.168.0.13`는 이 PC에서 VPN 연결이 필요하다. [진단·검증 기록](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-24_windows_vulkan_startup.md).
+
+## Fusion 계열 학습의 수치 안정성
+
+2026-10-24부터 Fusion과 이를 상속하는 Holding/OSC/ObjectRandom의 이전 action 관측8D는 `[-1,1]`로 제한한 복사본이다. raw action을 그대로 재입력하던 경로에서 출력이 반복 증폭되어 value loss와 std가 손상되는 문제를 재현해 수정했다. Action 실행과 보상 계산은 raw manager action을 그대로 사용한다. 관측 차원·모델·optimizer 키가 같아 기존 checkpoint를 로드할 수 있지만, 범위 밖 action에 대한 관측 의미는 변경되므로 기존 정책의 동작 동등성을 보장하지 않는다.
+
+`CurriculumOnPolicyRunner`의 PPO는 로컬 `NumericalPPO`를 사용한다. optimizer 복원 시 adaptive learning rate 변수도 함께 복원하고, scalar std는 optimizer step 뒤 최소`1e-4`로 투영한다. 관측·value·return·gradient·optimizer의 비유한 값 및 극단값을 검사한다. 다른 수치 이상이 발견되면 `numerical_failure.json`/`.pt`에 원인·관측·rollout·업데이트 전 상태를 남기고 중단하며 자동 재시작하지 않는다. 기본 관측·value·return 절댓값 상한과 value loss 상한은`1e6`이다. 이는 진단용 중단 기준이며 센서·보상을 clip하는 설정이 아니다.
+
+로그 전체의 읽기 전용 감사 도구는 다음처럼 실행한다. 출력 경로는 감사할 로그 트리 바깥을 지정한다.
+
+```powershell
+.\IsaacLab\isaaclab.bat -p src/inspire_sweep_baseline/scripts/audit_training_runs.py logs/TEMP --output outputs/temp_audit
+```
+
+[전체 TEMP 감사·원인 재현·검증 기록](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-24_temp_training_stability.md).
+
+## 파일 구조
+
+환경 파일은 역할별로 구성한다. 같은 계열의 v0/v1/v2는 아래 역할별 한 파일에 모으며 버전별 폴더를 만들지 않는다.
+
+| 위치 | 역할 |
+| --- | --- |
+| `inspire_sweep_baseline/agent/` | PPO Cfg, 정책·encoder 모델, PPO runner |
+| `inspire_sweep_baseline/assets/` | USD·형상·스포너·센서 기하, `scenes/`의 SceneCfg |
+| `inspire_sweep_baseline/mdp/` | actions·commands·observations·events·rewards·curricula·terminations의 Cfg, 각 `*_functions`의 계산, `common/`의 공유 상태·계산 |
+| `inspire_sweep_baseline/envs/` | Scene·Manager를 조합하는 EnvCfg |
+| `inspire_sweep_baseline/runtime/` | 실제 Env 클래스, reset/step lifecycle, telemetry |
+| `inspire_sweep_baseline/__init__.py` | Gym task 등록 |
+| `scripts/`, `tests/` | 실행·수집·분석 도구, CPU 계약 검사·simulator probe |
+
+Fusion EnvCfg는 `envs/contact_sweep_clutter_fusion_envs.py`, Holding EnvCfg는 `envs/contact_sweep_clutter_fusion_holding_envs.py`에 모인다. 현재 import·등록 문자열은 새 위치를 사용하며 이전 module 경로의 호환 파일은 제공하지 않는다. task ID와 기존 학습 계약은 유지한다. [향후 환경 추가·파일 배치·복구 기준](../../example/Contact-Rich-Manipulation-Context/00_guidelines/12_ENVIRONMENT_FILE_STRUCTURE.md), [2026-10-23 이관 검증 상태](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-23_environment_structure_migration.md)를 확인한다.
+
+2026-10-23 검증에서45개 환경의 초기 GPU/PPO 실행은 통과했다. Holding OSC ObjectRandom v1과 Holding ObjectRandom Test v0의16개 장애물 단계는 seed42·4 environments·iteration22500 reset에서 배치 실패가 재현되며, 이관 전 원본에도 같은 문제가 있다. [재현 조건과 검증 범위](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-23_environment_structure_migration.md#기존-오류-objectrandom의16개-장애물-reset)를 확인한다. 이 구조 정리에서는 배치 규칙을 바꾸지 않았다.
+
+2026-10-18 공통 보상 변경: Omni 계열에서 사용하는 `mdp/reward_functions/goal_rewards.py`의 `action_rate_l2`·`joint_vel_l2`는 raw 입력의 제곱합을 계산한 뒤 `max_cost=100.0`으로 출력 상한을 적용한다. 두 함수의 반환 범위는 [0, 100]이며 음의 보상 가중치와 dt는 이후 RewardManager에서 적용한다. 입력·가중치는 바꾸지 않는다. [변경·검증 로그](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-18_omni_squared_cost_caps.md).
+
+환경 ID: `Isaac-Inspire-Sweep-Baseline-v0`
+
+`Isaac-Sweep-Object-UR5e-Random-Single-Inspire-Open-v2-mass`의 구성을 독립 패키지로 옮긴 환경이다. 기존 프로젝트 패키지를 import하거나 상속하지 않는다. MDP 함수, 로봇 스포너, 실린더 스포너, PPO 설정, 실행 스크립트와 로봇 USD를 이 패키지에 포함한다. Isaac Lab, Isaac Sim, RSL-RL은 기존 설치를 사용한다.
+
+## 구성
+
+- UR5e + Axia80을 모티브로 한 원통형 F/T 하우징 + Inspire Robot Hand.
+- 단일 실린더: 반지름 4 cm, 높이 10 cm, 질량 1 kg. 물체 link 원점은 바닥이며, 질량 중심은 바닥에서 2 cm 위에 둔다.
+- 물체 시작 위치는 `(-0.75, 0, 1.05)`에 XY 각각 ±2 cm와 yaw 변동을 부여한다. 로봇의 초기 관절은 기존 환경과 같다. Reaching을 생략하지 않는다.
+- 기본 리셋 이벤트는 좌/우를 환경마다 무작위로 선택한다. `left`는 월드 −Y, `right`는 월드 +Y다. 목표는 초기 물체 위치에서 해당 방향으로 18 cm 떨어진 위치이며, 에피소드 동안 고정된다.
+- Reach와 Sweep 게이트의 접근 목표: 물체 X−2 cm, Y−`radius × direction`, **바닥 Z+9 cm**. 높이 10 cm인 실린더의 기하학적 중심을 기준으로는 **+4 cm**다. 질량 중심의 높이를 더하는 계산이 아니다.
+- EEF는 손 기준 `(0, 0, 0.13)`이다. F/T 삽입에 따른 2.54 cm 연장을 물리적으로 반영하며, 하우징 중심 기준 `(0, 0, 0.1427)`로 정의해 길이를 중복 가산하지 않는다.
+- EEF의 로컬 Y축(Hand의 로컬 X축)과 선반 Z축을 정렬한다. 회전 행렬의 열 벡터를 사용한다.
+
+## 입력과 출력
+
+Actor와 Critic은 같은 `policy` 관측 41D를 사용한다. 별도의 privileged 관측은 없다.
+
+| 관측 순서 | 내용 | 차원 |
+| --- | --- | ---: |
+| 1 | Arm 상대 관절 위치 | 6 |
+| 2 | Arm 상대 관절 속도 | 6 |
+| 3 | 직전 액션 | 8 |
+| 4 | 현재 물체 위치, 로봇 root 기준 | 3 |
+| 5 | 물체 width: 실린더 반지름 0.04 m | 1 |
+| 6 | EEF pose: 위치 + quaternion, 로봇 root 기준 | 7 |
+| 7 | Sweep 목표 위치, 로봇 root 기준 | 3 |
+| 8 | 손바닥 한 영역의 접촉 여부, 0.05 N 임계치 | 1 |
+| 9 | EEF 좌표계/기준점의 F/T, N 및 Nm | 6 |
+| 합계 | 기존 34D + 센서 7D | **41** |
+
+물체 위치와 width에는 기존의 ±1 cm 관측 노이즈를 유지한다. F/T는 고정 조인트의 반력을 읽어 EEF로 회전하고 모멘트 기준점을 이동한다. Tare를 적용하지 않는다. 리셋 직후에는 stale 센서 데이터를 0으로 마스킹한다. 센서 값을 별도의 보상이나 게이트 조건으로 사용하지 않는다.
+
+| 액션 | 구성 | 차원 |
+| --- | --- | ---: |
+| Arm | 6개 UR5e 관절의 Joint Position command, 초기 관절 위치 + `0.5 × action` | 6 |
+| Hand | 전체 굽힘 openness + 별도 엄지 opposition openness | 2 |
+| 합계 | Arm + Hand | **8** |
+
+Hand는 입력을 `[0, 1]`로 제한해 12개 관절에 근사 매핑한다. `1`은 완전히 편 상태, `0`은 굽힌 상태다. 리셋 시 두 입력과 액션 이력은 `[1, 1]`이다. 별도의 액션 필터를 추가하지 않는다.
+
+## 보상과 종료
+
+| 보상 | 가중치 | 내용 |
+| --- | ---: | --- |
+| reaching | 3.0 | 접근 목표까지의 거리 `d`에 대해 `exp(-10 × d)` |
+| orientation | 2.0 | EEF Y축과 선반 Z축의 방향 정렬 |
+| sweeping_object | 6.0 | 목표까지 물체 이동 + 기존 물체 Y 속도 보상 |
+| homing_after_sweep | 9.0 | 물체 도달 이후 초기 Arm 관절 위치로 복귀 |
+| shelf_collision | −0.5 | 선반 이동 및 가상 finger/wrist 프레임의 높이 |
+| object_collision | −0.5 | 비대상 물체 이동. 단일 물체이므로 항상 0 |
+| action_rate | −0.03 | 8D 액션 변화량의 제곱합 |
+| joint_vel | −0.03 | 이름으로 선택한 Arm 6개 관절 속도의 제곱합 |
+
+밀기 보상 게이트는 기존 XYZ 거리 4 cm와 wrist Y 거리 4 cm 조건을 유지한다. 물체가 목표에서 3 cm 이내에 도달하면 기존 도달 보상 분기를 사용한다. Reach 목표는 움직이는 물체를 따라 갱신된다.
+
+- Arm 관절 속도: **6개 Arm 관절 중 하나라도 절댓값이 1 rad/s를 넘으면 종료**. 로그의 기존 이름 `hand_velocity`는 유지하지만 손가락 속도는 이 조건에 포함하지 않는다.
+- 물체 바닥 높이 1.04 m 미만 또는 roll/pitch 절댓값 0.9 rad 초과.
+- 물체 속도 norm 0.3 m/s 초과.
+- 기존 선반 속도 및 가상 finger/wrist 높이 종료 조건.
+- 에피소드 10초. 물리 step 0.01초, decimation 2, 제어 50 Hz.
+
+기존의 object collision curriculum은 시작 가중치와 변경 가중치가 모두 −0.5이며, 단일 물체에서 해당 보상은 0이다. 따라서 동작을 바꾸지 않는 이 항목은 따로 구성하지 않았다.
+
+PPO는 기존 설정을 유지한다: Actor/Critic MLP `[256, 128, 64]`, ELU, 관측 정규화 없음, 초기 표준편차 1.0, rollout 36 step, 8 epoch/4 minibatch, learning rate `1e-3` adaptive, gamma 0.98, lambda 0.95, clip 0.2, entropy 0.005, desired KL 0.02, gradient norm 1.0. 체크포인트는 50 iteration마다 저장하며 기본 최대 iteration은 90000이다.
+
+## 실행
+
+저장소 루트에서 실행한다. 스크립트가 새 패키지만 등록하므로 editable 설치나 기존 환경 패키지를 요구하지 않는다.
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Sweep-Baseline-v0 \
+  --num_envs 2048 \
+  --sweep-direction both \
+  --run_name baseline_mass_z9cm_1rad \
+  --headless
+```
+
+좌로만 밀기는 `--sweep-direction left`, 우로만 밀기는 `--sweep-direction right`로 바꾼다. 해당 옵션을 생략하면 이벤트 기본값인 `both`를 사용한다. 이벤트 설정 파일에서는 `events.object_spawn.params["sweep_direction"]`로 지정한다.
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/play.py \
+  --task Isaac-Inspire-Sweep-Baseline-v0 \
+  --num_envs 1 \
+  --checkpoint "<checkpoint.pt>"
+```
+
+녹화:
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/play.py \
+  --task Isaac-Inspire-Sweep-Baseline-v0 \
+  --num_envs 1 \
+  --checkpoint "<checkpoint.pt>" \
+  --video --video_length 500 --headless
+```
+
+학습 로그는 `logs/rsl_rl/inspire_sweep_baseline/<timestamp>_<run_name>`에 저장된다. 녹화는 해당 체크포인트 디렉터리의 `videos/play`에 저장된다.
+
+로봇 USD는 패키지 내부에 포함하고 물체는 절차적으로 생성한다. 선반 USD는 기존과 동일한 외부 에셋을 사용한다. 기본 주소는 `assets/shelf/Arena/Collected_speedrack_shape/speedrack_shape.usd`이며, 다른 컴퓨터에서는 `INSPIRE_SWEEP_SHELF_USD_PATH` 또는 `INSPIRE_SWEEP_ASSET_ROOT`를 설정한다. 기존 `SWEEP_POLICY_SHELF_USD_PATH`/`SWEEP_POLICY_ASSET_ROOT`도 경로 설정값으로 사용할 수 있다.
+
+## 코드 위치
+
+- `inspire_sweep_baseline/envs/sweep_envs.py`: Scene·Manager Cfg를 조합하는 Baseline 계열 EnvCfg.
+- `inspire_sweep_baseline/assets/scenes/sweep.py`: Baseline·Tactile SceneCfg.
+- `inspire_sweep_baseline/runtime/sweep.py`: 리셋 시 Hand 액션 이력과 센서 유효성 처리.
+- `inspire_sweep_baseline/assets`: 독립 로봇 USD, F/T 하우징 스포너, 실린더 물성.
+- `inspire_sweep_baseline/mdp`: 역할별 Manager Cfg와 계산 함수, 공유 센서 처리.
+- `inspire_sweep_baseline/agent/sweep_ppo_cfg.py`: PPO 설정.
+- `scripts`: 복사한 Isaac Lab RSL-RL train/play와 CLI. 기존 프로젝트 import는 제거했다.
+- `tests`: CPU 동작 검증 및 USD 정적 검증.
+
+## Baseline에서 파생한 17채널 Tactile 환경
+
+환경 ID: `Isaac-Inspire-Sweep-Baseline-Tactile-v0`. `InspireSweepTactileEnvCfg`가 `InspireSweepEnvCfg`를 직접 상속한다. [센서 구성·순서·검증 범위](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/TACTILE_ENVIRONMENT.md)를 참고한다.
+
+기존 Hand의 실제 센서 영역 17개(palm 1, thumb 4, 나머지 네 손가락 각 3)를 각각 0/1로 읽는다. 일부 패드가 부모 링크의 convexHull 안쪽에 가려져 있으므로, 직접 패드 힘과 함께 실제 부모 접촉점을 원래 센서 mesh의 XY 영역에 분류한 값을 사용한다. 서로 다른 영역의 힘을 통합하거나 부모 전체의 힘을 모든 패드에 복제하지 않는다.
+
+2026-10-15 GPU 필터 수정: 부모 접촉점 분류는 GPU에서 지원되는 `mass_cylinder`만 대상으로 한다. 선반·바닥의 미지원 GPU 필터를 제거했으며, 17개 직접 pad 센서는 unfiltered 상태를 유지한다. 따라서 직접 pad의 선반 접촉은 읽지만, 가려진 pad의 선반·바닥 접촉을 부모 접촉점으로 복원하지는 않는다. Tactile 환경의 EEF 좌표축 디버그 표시만 끄고 frame 계산과 F/T 관측은 유지한다.
+
+원본 USD·URDF·mesh, collider 수, 형상·접촉 파라미터·질량·관성·관절·제어·보상·종료 조건은 Baseline과 같다. 새 환경의 Scene에 관측용 ContactSensor view만 추가하며 기존 환경은 1D tactile/41D 관측을 유지한다. 새 환경은 tactile 17D를 포함한 Actor/Critic `policy` **57D**, Action **8D**다. 이 57D는 발표의 OSC 설계와 별개인 Joint Position 기준선이다. 기존 41D checkpoint와 입력 크기가 다르므로 새 정책을 학습한다.
+
+```bash
+# Workspace 루트, Isaac Lab 환경에서 새 학습
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Sweep-Baseline-Tactile-v0 \
+  --num_envs 2048 --sweep-direction both \
+  --run_name tactile17 --headless
+
+# 새 57D checkpoint 재생
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/play.py \
+  --task Isaac-Inspire-Sweep-Baseline-Tactile-v0 \
+  --num_envs 1 --checkpoint "<57D_tactile_checkpoint.pt>" --real-time
+
+# 원본 USD와 관측용 영역 metadata를 읽기 전용으로 검사
+python -B \
+  src/inspire_sweep_baseline/scripts/build_tactile_regions.py --check
+```
+
+기본 로그 폴더는 `logs/rsl_rl/inspire_sweep_tactile`다. 접촉 Binary의 임계값은 `observations.policy.tactile.params["threshold_n"] = 0.05` N이다. CPU·USD 검사와 GPU 접촉·성능 검증은 구분하며, 실제 GPU 응답과 속도는 아직 측정하지 않았다.
+
+
+## 물체 질량
+
+| 항목                 | 설정값                |
+| ------------------ | ------------------ |
+| 질량 평균 (Mean)       | 0.365 kg (365 g)   |
+| Gaussian Noise (σ) | 0.0675 kg (67.5 g) |
+| 예상 95% 범위 (±2σ)    | 0.230 \~ 0.500 kg  |
+
+추천 설정
+
+\\[ \boxed{m\sim\mathcal{N}(0.365,\\;0.0675^2)\ \mathrm{kg}} \\]
+
+- Gaussian Noise는 Episode마다 샘플링
+- 약 95%의 샘플이 230\~500 g 범위에 포함
+- 범위를 절대 벗어나면 안 된다면 0.230\~0.500 kg으로 Clipping 적용
+
+## 마찰 계수
+
+Friction Combine Mode: `Average`
+
+| 오브젝트 | 정적 마찰 계수 (Mean) | Gaussian Noise (σ) | 동적 마찰 계수 (Mean) | Gaussian Noise (σ) |
+| ---- | --------------- | ------------------ | --------------- | ------------------ |
+| 바닥   | 0.315           | 0.051              | 0.252           | 0.041              |
+| 물건   | 0.315           | 0.040              | 0.252           | 0.032              |
+| Tool | 0.585           | 0.145              | 0.468           | 0.116              |
+
+설정 조건
+
+- 동적 마찰 계수의 평균은 정적 마찰 계수 평균의 약 0.8배. 샘플마다 고정 비율을 강제하지 않는다.
+- Gaussian Noise 범위: ±2σ ≈ 95%
+- Noise는 Episode별 샘플링
+
+접촉쌍별 결과
+
+| 접촉쌍       | 정적 마찰 평균 | 예상 95% 범위    |
+| --------- | -------- | ------------ |
+| 바닥 ↔ 물건   | 0.315    | 0.25 \~ 0.38 |
+| 물건 ↔ Tool | 0.450    | 0.30 \~ 0.60 |
+
+## 실제 질량·마찰 랜덤화 실험 환경
+
+환경 ID: `Isaac-Inspire-Sweep-Realistic-Physics-v0`
+
+`InspireSweepRealisticPhysicsEnvCfg`가 Baseline을 상속한다. 변경 사항은 물체 질량과 선반/물체/Hand의 마찰 및 이를 샘플링하는 Event다. Actor 41D, Action 8D, 초기 자세, 양방향 스폰, EEF/목표 높이, 보상, 게이트, 1 rad/s 종료와 PPO는 유지한다. 학습 로그 폴더만 실험 구분을 위해 분리한다.
+
+- 질량: 매 에피소드 `Normal(0.365, 0.0675²)` kg에서 샘플링한 뒤 `[0.230, 0.500]` kg으로 clipping한다. Spawn 기본 질량은 0.365 kg이다.
+- 반지름 4 cm, 높이 10 cm와 바닥 원점/COM +2 cm를 유지한다. 관성은 기존 질량 분포를 유지하면서 새 질량에 비례해 조정한다. 이전 에피소드의 관성을 다시 곱하지 않는다.
+- 아래 표의 정적·동적 마찰 Gaussian 분포를 역할별 4096개 재질 풀로 근사한다. 에피소드마다 선반/물체/Hand가 각자 새 재질 ID를 선택한다. 동적/정적의 평균 비율은 약 0.8이며, 각 샘플에 고정 비율을 강제하지 않는다.
+- 마찰의 ±2σ는 예상 범위이며 clipping 범위가 아니다. 음수 샘플만 0으로 제한한다.
+
+| 접촉면 | 정적 평균 | 정적 σ | 동적 평균 | 동적 σ |
+| --- | ---: | ---: | ---: | ---: |
+| 선반 | 0.315 | 0.051 | 0.252 | 0.041 |
+| 물체 | 0.315 | 0.040 | 0.252 | 0.032 |
+| Hand | 0.585 | 0.145 | 0.468 | 0.116 |
+
+선반은 물체를 지지하는 Shelf 충돌 형상에 적용한다. 전역 GroundPlane은 그대로 둔다. Hand는 손바닥 패드, 손가락 패드 및 Hand 링크의 충돌 형상에 적용한다. UR5e Arm 및 Axia80 하우징의 마찰은 유지한다.
+
+Friction Combine Mode는 양쪽 모두 `average`다. 정적 접촉 마찰은 선반↔물체 평균 0.315/약 95% 범위 0.250–0.380, 물체↔Hand 평균 0.450/약 95% 범위 0.300–0.600이다. 기존 restitution, restitution combine mode 및 compliant contact 값은 보존한다.
+
+생성 단계에서 선반/물체/Hand 충돌 형상에 Average 재질을 바인딩한다. 리셋에서는 PhysX Tensor API의 `set_material_properties()`로 역할별 마찰을 일괄 적용한다. 재질 풀은 Gaussian 분위값으로 평균·표준편차를 근사하며 정적/동적 값의 순서를 각각 조합한다. 풀 크기를 4096개로 제한해 PhysX의 고유 재질 수 제한을 피한다. 매 에피소드에 연속 Gaussian 값을 새로 작성하는 이전 방식과 달리, 마찰은 유한한 풀에서 재샘플링한다. 질량은 기존대로 연속 Gaussian 샘플링과 clipping을 유지한다. 질량과 마찰을 정책 관측에 추가하지 않는다. 현재 적용된 값은 디버깅용 `env.unwrapped._realistic_physics`의 `mass`, `static_friction`, `dynamic_friction`에서 확인할 수 있다.
+
+Material 생성·바인딩은 **로봇·선반·물체 스포너에서, PhysX 시작 및 환경 복제 전에** 완료한다. `startup`에서는 물리 view의 질량·관성·마찰 버퍼와 Hand shape 인덱스를 한 번 저장한다. 리셋에서 USD 속성을 변경하거나 물성 버퍼 전체를 다시 읽지 않는다. 업데이트는 질량·관성 2회, 선반/물체/Hand 마찰 3회의 Tensor API 호출로 처리한다. `prestartup` 이벤트와 `replicate_physics=False` 설정을 제거해 Baseline의 physics replication을 사용한다. Initial-Privileged 상속 환경에도 같은 경로가 적용된다.
+
+학습:
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Sweep-Realistic-Physics-v0 \
+  --num_envs 2048 \
+  --sweep-direction both \
+  --run_name realistic_mass_friction \
+  --headless
+```
+
+좌측/우측 전용 Event는 기존과 같이 `--sweep-direction left`/`right`로 선택한다.
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/play.py \
+  --task Isaac-Inspire-Sweep-Realistic-Physics-v0 \
+  --num_envs 1 \
+  --checkpoint "<checkpoint.pt>"
+```
+
+로그: `logs/rsl_rl/inspire_sweep_realistic_physics/<timestamp>_<run_name>`.
+
+설정: `inspire_sweep_baseline/envs/sweep_envs.py`. 분포 및 reset 처리: `inspire_sweep_baseline/mdp/common/realistic_physics.py`. 초기 material 바인딩: `inspire_sweep_baseline/assets/realistic_materials.py`. 생성 시 바인딩을 수행하는 스포너: `inspire_sweep_baseline/assets/realistic_spawners.py`.
+
+
+## 초기 위치 Actor + 현재 상태 Critic 실험 환경
+
+환경 ID: `Isaac-Inspire-Sweep-Realistic-Physics-Initial-Privileged-v0`
+
+`InspireSweepRealisticInitialPrivilegedEnvCfg`가 실제 질량·마찰 랜덤화 환경을 상속한다. 목적은 정책이 물체를 계속 추적하는 관측 없이, 초기 물체 위치와 로봇/접촉 관측으로 밀기를 수행할 수 있는지 확인하는 것이다. Critic에는 현재 물체 상태를 제공해 가치 추정을 돕는다.
+
+- `policy`의 4번째 항목, 물체 위치 3D를 **에피소드 초기 물체 위치**로 교체한다. 좌표계는 기존과 같은 로봇 root 기준이고, 물체 원점은 실린더 바닥이다.
+- 리셋 후 command가 저장한 초기 상태를 사용한다. 선택된 환경만 새 위치를 캡처하며, 에피소드 중에는 물체나 robot root가 움직여도 저장한 측정값을 바꾸지 않는다.
+- 기존 ±1 cm 위치 관측 오차도 리셋마다 1회 샘플링하고 유지한다. 다른 policy 관측과 노이즈 설정은 그대로 둔다.
+- `privileged`에는 예제처럼 현재 물체의 위치 3D, quaternion 4D, 선속도 3D, 각속도 3D를 넣는다. 모두 로봇 root 좌표계로 표현한 13D이며 관측 노이즈를 적용하지 않는다.
+- 리워드는 기존 함수대로 Scene의 현재 물체 정보를 읽는다. Actor의 고정 위치나 privileged 관측 벡터를 보상 입력으로 대체하지 않는다.
+- 질량·마찰 랜덤화, 크기·COM, 스폰 방향/위치, Arm/Hand 제어, 보상·게이트·종료 및 PPO 수치 설정을 상속한다.
+
+```python
+obs_groups = {"actor": ["policy"], "critic": ["policy", "privileged"]}
+```
+
+| 네트워크 | 입력 | 차원 |
+| --- | --- | ---: |
+| Actor | 초기 위치를 포함한 policy | 41 |
+| Critic | policy + privileged 현재 물체 상태 | 54 |
+| Action | 기존 Arm 6 + Hand 2 | 8 |
+
+학습:
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Sweep-Realistic-Physics-Initial-Privileged-v0 \
+  --num_envs 2048 \
+  --sweep-direction both \
+  --run_name realistic_initial_privileged \
+  --headless
+```
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/play.py \
+  --task Isaac-Inspire-Sweep-Realistic-Physics-Initial-Privileged-v0 \
+  --num_envs 1 \
+  --checkpoint "<checkpoint.pt>"
+```
+
+좌·우 방향 고정은 기존과 같이 `--sweep-direction left`/`right`를 사용한다. 로그는 `logs/rsl_rl/inspire_sweep_realistic_initial_privileged/<timestamp>_<run_name>`에 저장한다.
+
+설정: `inspire_sweep_baseline/envs/sweep_envs.py`. 관측 처리: `inspire_sweep_baseline/mdp/observation_functions/asymmetric_observations.py`. PPO 입력 경로: `inspire_sweep_baseline/agent/sweep_ppo_cfg.py`.
+
+## 전방향 목표 위치 실험 환경
+
+환경 ID: `Isaac-Inspire-Sweep-Omni-v0`
+
+Scene, Action, Event, Observation, Reward, Termination과 각 파라미터의 의미는 [Omni 환경 상세 구성](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/OMNI_ENVIRONMENT.md)에 정리되어 있다.
+
+`InspireSweepOmniEnvCfg`가 `InspireSweepEnvCfg`를 직접 상속한다. 로봇·선반·실린더 형상, Initial Joint, Arm 6 + Hand 2 제어, 현재 물체 위치를 사용하는 policy 41D 관측과 노이즈, 50 Hz 제어 및 10초 제한은 Baseline을 사용한다. `InspireSweepPPORunnerCfg`도 동일 클래스를 그대로 등록한다. 질량·마찰은 `apply_realistic_physics()`와 `RealisticPhysicsEventsCfg`의 startup/reset 이벤트를 재사용하므로 Realistic Physics 환경과 동일하다.
+
+### 스폰과 목표
+
+- 물체 바닥 원점을 선반 상판 정중앙 `(-0.7, 0, 1.05)` 기준 **R=2 cm 원판**에서 면적에 대해 균일하게 샘플링한다. 현재 좌표계의 Z가 높이이며, 수평 평면은 XY다. 실린더 yaw는 무작위이고 높이는 상판에 고정한다.
+- 목표는 초기 물체 위치에서 **무작위 수평 방위로 15 cm** 이동한 점이다. 방위는 `[−π, π)` 전체에서 균일 샘플링한다. 에피소드 동안 목표와 초기 물체 위치는 고정된다.
+- 같은 선반 USD의 중간 상판 영역은 X `[-0.9, -0.5]`, Y `[-0.5, 0.5]`다. 목표에서는 실린더 반지름 4 cm에 여유 2 cm를 더해 가장자리와 간격을 확보한다. 목표가 이 안전 영역을 벗어나면 **방위와 스폰을 유지하고 목표 이동 거리만 줄인다**. 해당 값은 `events.object_spawn.params`에서 조정할 수 있다.
+
+### 보상과 종료
+
+[Omni 보상 제안 초안](../../example/Contact-Rich-Manipulation-Context/01_plan/environments/OMNI_REWARD_PLAN.md)의 식을 적용하며 다음 수치는 확인한 초기 시험값이다. 목표 비용에는 접근 게이트를 두지 않는다. 기존 EEF 방향 정렬, Y 속도 보상, Homing 보상과 단일 물체에서 0인 비대상 물체 보상을 제거한다.
+
+| 항목 | 초기 가중치 | 계산 |
+| --- | ---: | --- |
+| 목표 평면 거리 | +6.0 | `exp(-d / 0.10) - 1` |
+| 접근 진척 | +1.0 | 고정 `ee_frame`에서 초기 물체 바닥 원점까지의 새 최단 거리 진척. 근접 반경 10 cm, 에피소드 합계 최대 +1 |
+| Arm Action Rate | −0.03 | Arm 6개 명령 변화량의 제곱합. Baseline의 Arm 비용과 동일 |
+| Hand Action Rate | −0.03 | Hand 2개 raw 명령 변화량의 제곱합. 보상 내부 clamp 없음 |
+| Arm Joint Velocity | −0.03 | 이름으로 선택한 Arm 6개 실제 관절 속도의 제곱합. Baseline과 동일 |
+| Hand Joint Velocity | −0.01 | Hand 12개 실제 관절 속도의 제곱합 |
+| 물체 기울기 | −2.0 | 상판 법선과 물체 위쪽 축 사이 각도. 5° 이하 비용 0, 0.9 rad까지 정규화한 제곱 비용 |
+| 선반 페널티 | −0.5 | 기존 `ShelfCollisionPenalty` 계산 유지 |
+| 시간 비용 | −0.1 | 초당 비용 |
+| 성공 / 실패 이벤트 | +30 / −80 | 종료 전이에 한 번 지급. 여러 실패가 동시에 발생해도 −80 한 번 |
+
+목표 오차 **1 cm 미만**, 물체 평면 속도 **2 cm/s 미만**, 기울기 **10° 이하**, 상판 지지 상태와 실패 없음이 **0.3초** 연속 유지되면 성공 보상을 지급하고 종료한다. 지지 상태는 pose 기반 기하학적 추정으로, 바닥 최저점과 상판 높이 오차가 1 cm 이내이고 물체 원점이 반지름 여유를 적용한 상판 영역 안에 있는지 검사한다. 실제 접촉력을 검사하거나 기울어진 실린더 전체의 투영 영역을 계산하지 않는다. 손 자세와 Homing은 성공 조건에 포함하지 않는다.
+
+실패는 기존 Arm >1 rad/s, 물체 속도 norm >0.3 m/s, 물체 바닥 높이 <1.04 m 및 기존 선반 속도·finger/wrist 높이 검사를 유지한다. roll/pitch 검사는 상판 법선 기준 기울기 **≥0.9 rad**로 교체한다. 물체 바닥 원점의 수평 위치가 상판 영역을 벗어나거나 선반 위치가 초기 위치에서 **5 cm 초과** 이동해도 종료한다. 실패가 발생하면 성공 유지 시간을 초기화하고 성공 보상을 지급하지 않는다. 시간 제한만 도달한 경우에는 실패 이벤트 페널티를 지급하지 않는다.
+
+Isaac Lab `RewardManager`가 모든 항에 `step_dt`를 곱하므로 접근 진척과 성공·실패 함수는 내부에서 이 곱셈을 상쇄한다. 나머지 항은 계획서의 `Δt / T_ref` (`T_ref=1초`)로 누적된다. 접근 기록과 성공 유지 카운터는 리셋된 환경만 초기화한다. PPO의 `gamma=0.98`도 그대로 유지하며, 보상 가중치와 종료 임계값은 새 Cfg에서 조정한다.
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Sweep-Omni-v0 \
+  --num_envs 2048 \
+  --experiment_name inspire_sweep_omni \
+  --run_name centered_spawn_goal15cm \
+  --headless
+```
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/play.py \
+  --task Isaac-Inspire-Sweep-Omni-v0 \
+  --num_envs 1 \
+  --checkpoint "<checkpoint.pt>"
+```
+
+새 환경은 항상 전방향 목표를 생성하므로 `--sweep-direction`을 사용하지 않는다. PPO 클래스의 기본 로그 폴더는 Baseline과 같으며, 위 학습 명령처럼 `--experiment_name`으로 구분할 수 있다.
+
+설정: `inspire_sweep_baseline/envs/sweep_omni_envs.py`. 스폰·목표: `mdp/event_functions/goal_events.py`. 보상: `mdp/reward_functions/goal_rewards.py`. 종료: `mdp/termination_functions/goal_terminations.py`.
+
+### Omni v1: Arm 속도 종료 기준 변형
+
+환경 ID: `Isaac-Inspire-Sweep-Omni-v1`. `InspireSweepOmniV1EnvCfg`는 `InspireSweepOmniEnvCfg`를 상속하며 `terminations.hand_velocity.params["threshold"]`를 변경한다. 현재 코드 값은 3.0 rad/s다. 이름이 `hand_velocity`인 종료 항목은 Arm 6개 관절을 검사한다. 절대 속도 3.0 rad/s는 허용하고, 초과하면 종료한다. v0는 1.0 rad/s를 유지한다.
+
+관측 41D, Action 8D, 스폰·목표·물성·보상·나머지 종료 조건과 PPO는 v0에서 상속한다. Arm 속도 보상은 실제 관절 속도의 제곱합이며 actuator 속도 제한도 그대로다. v0 체크포인트를 지정해 v1에서 재생할 수 있지만, 변경한 종료 조건에서 성공하거나 첫 스텝 종료가 해결됐다는 뜻은 아니다.
+
+```bash
+# v1 새 학습
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Sweep-Omni-v1 --num_envs 2048 \
+  --experiment_name inspire_sweep_omni_v1 \
+  --run_name centered_spawn_goal15cm_arm3rad --headless
+
+# v0 체크포인트를 v1 조건으로 재생
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/play.py \
+  --task Isaac-Inspire-Sweep-Omni-v1 --num_envs 1 \
+  --checkpoint ./logs/TEMP/2026-10-14_16-16-28_centered_spawn_goal15cm/model_4100.pt \
+  --real-time
+```
+
+### Omni v2: 현재 물체 접근과 목표 이동 진전
+
+환경 ID: `Isaac-Inspire-Sweep-Omni-v2`. `InspireSweepOmniV2EnvCfg`는 v1을 상속한다. 기존 v0/v1의 동작은 유지한다. [활성 환경 안내](../../example/Contact-Rich-Manipulation-Context/02_implementation/08_ACTIVE_ENVIRONMENTS.md)와 [개발·검증 로그](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-15_omni_v2_rewards.md)에 계산식과 검증 범위를 기록했다.
+
+
+| 보상 | v2 계산과 기본값 |
+| --- | --- |
+| `reaching` | 현재 물체 바닥 중심과 EEF의 XYZ 거리에서 10cm를 뺀 거리가 episode 최소 기록을 갱신한 만큼 지급. Reset 거리로 정규화하고 누적 최대 +30 |
+| `goal_distance` | 물체의 XY 목표 거리를 새롭게 줄인 비율만 지급. Reset 시 목표 거리에서 허용 오차 1cm를 뺀 값으로 정규화하고 누적 최대 +40 |
+| Arm action rate / joint velocity | 각각 −0.03, 기존과 같은 sum 계산 |
+| Hand action rate / joint velocity | 각각 −0.03 / −0.01, raw Action 변화량 / 실제 관절 속도의 sum 계산 |
+| `object_tilt` / `shelf_collision` | v1과 같은 −2 / −0.5 |
+| `time` / `success` / `failure` | 보상 설정을 `None`으로 제거 |
+
+두 진전 보상은 함수 내부에서 `step_dt`로 나눠 RewardManager의 시간 곱셈을 상쇄한다. 접근 전에는 Reaching이 주요 양의 신호이고, 접근 기록을 소진한 뒤에는 물체의 목표 접근이 추가 task 보상을 만든다. 가만히 기다리기, 같은 거리에서 함께 이동하기, 후퇴 후 기존 최고 기록으로 복귀하기에는 추가 진전 보상이 없다. 목표 보상은 v1의 음의 거리 비용과 의미가 다르므로 TensorBoard 값을 직접 비교하지 않는다.
+
+이 계수는 학습 성능을 검증하기 전의 실험 기본값이다. Reaching은 상대 거리만 검사하므로 물체가 EEF 쪽으로 움직여도 지급될 수 있고, 목표 이동 보상만으로 물체의 직립·접촉을 보장하지 않는다. 직립 비용은 유지한다. v2에서는 `terminations.success=None`으로 성공 종료도 제거하므로 목표 도달 후에도 episode가 계속된다. 시간 제한 10초, 실패 종료와 Arm 속도 임계값 3 rad/s는 v1과 같다. PPO·관측·action·물성은 변경하지 않는다.
+
+```bash
+# v2 새 학습: v1 체크포인트 resume 없이 보상 변경 효과 확인
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Sweep-Omni-v2 --num_envs 2048 \
+  --experiment_name inspire_sweep_omni_v2 \
+  --run_name live_reach30_sweep40 --headless
+
+# 생성된 v2 체크포인트 재생
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/play.py \
+  --task Isaac-Inspire-Sweep-Omni-v2 --num_envs 1 \
+  --experiment_name inspire_sweep_omni_v2 \
+  --checkpoint "<v2-checkpoint.pt>" --real-time
+```
+
+전방향 목표를 사용하므로 `--sweep-direction`은 지정하지 않는다. Runner 기본 클래스는 기존과 같으므로 위 `--experiment_name`으로 v2 로그와 체크포인트를 구분한다.
+
+### Omni v3: 높이 조건을 만족하는 XY 접근
+
+`Isaac-Inspire-Sweep-Omni-v3`의 `InspireSweepOmniV3EnvCfg`는 현재 v2를 상속하고 Reaching의 함수와 높이 파라미터만 변경한다. 이번 작업 시 코드의 가중치는 Reaching 30, Goal 40이며 그대로 상속한다. 다른 보상·종료·관측·action·PPO 설정은 v2와 같다.
+
+- 목표 높이: **현재 물체 바닥 Z + 0.09m**. `example/Sweep-Policy/sweeping_policy/mdp/reward_random_sweep.py`의 기본 Reaching 목표 높이를 따른다.
+- 지급 조건: EEF의 목표 높이 오차가 **±0.02m 이내**이면서, 현재 물체와의 XY 거리가 episode 최소 기록을 갱신할 때. 2cm는 v3에 추가한 실험 허용 오차다.
+- 거리: `max(XY 거리 − 0.10m, 0)`. Reset 시 같은 XY 거리로 정규화하며 기존의 일회성 진전 보상 구조와 `step_dt` 상쇄를 유지한다.
+- 높이 조건 밖에서도 XY 최소 기록은 갱신한다. 따라서 낮은 높이에서 접근한 뒤 Z만 조정해 누적 진전을 보상받거나, 높이 범위 출입으로 반복 보상받을 수 없다. 높이 밖에서 소진한 접근 진전은 다시 지급하지 않는다.
+
+참고 코드의 원래 Reaching은 Z 오프셋을 둔 3D 지수 보상이며, 위 hard gate와 2cm 허용 오차는 이번 요청에 맞춰 추가했다. EEF 높이 조건이 손 전체의 선반 충돌 방지를 보장하는 것은 아니며, 실제 학습·재생 검증은 별도다. [v3 개발 로그](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-15_omni_v3_height_gated_reaching.md).
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Sweep-Omni-v3 --num_envs 2048 \
+  --experiment_name inspire_sweep_omni_v3 \
+  --run_name height_gated_xy_reach --headless
+
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/play.py \
+  --task Isaac-Inspire-Sweep-Omni-v3 --num_envs 1 \
+  --experiment_name inspire_sweep_omni_v3 \
+  --checkpoint "<v3-checkpoint.pt>" --real-time
+```
+
+### Dex Omni: 과거 최고 상태를 갱신한 거리만큼 보상
+
+환경 ID: `Isaac-Inspire-Dex-Omni-v0`. [InspireDexOmniEnvCfg](inspire_sweep_baseline/envs/sweep_omni_envs.py)는 `InspireSweepOmniV2EnvCfg`를 상속하고, `DexOmniRewardsCfg(OmniV2RewardsCfg)`에서 접근·목표 이동 보상 두 항만 교체한다. Runtime은 `InspireSweepEnv`, PPO는 `InspireSweepPPORunnerCfg`를 그대로 사용한다.
+
+DexTouch 논문의 IV-B, 식 (1)과 식 (2)의 목표 거리 항(PDF 4쪽, 인쇄 페이지 10775)에서 **에피소드의 과거 최고 상태를 갱신할 때 그 개선량만 지급하는 구조**를 차용했다. 논문의 손가락별 접근 거리 대신 기존 고정 EEF 프레임과 현재 물체 바닥 원점 사이 거리를 사용하고, 목표 거리는 Sweeping의 XY 평면에서 계산한다. 논문의 grasp·lift·rotation 단계나 L1 관절 속도 비용은 추가하지 않는다. 출처와 구현·검증 범위는 [개발 로그](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-15_dex_omni_rewards.md)에 기록한다.
+
+| 보상 | 남은 거리 `gap` | 계수 |
+| --- | --- | ---: |
+| `reaching` / `DexReachProgress` | `max(EEF–현재 물체 바닥 원점 XYZ 거리 − 0.10 m, 0)` | +30 reward/m |
+| `goal_distance` / `DexPlanarGoalProgress` | `max(물체–목표 XY 거리 − 0.01 m, 0)` | +300 reward/m |
+
+각 term의 보상 기준은 리셋 상태의 `gap`이다. Step마다 `max(직전 최소 gap − 현재 gap, 0)`만큼 개선량을 구하고 최소 기록을 갱신한다. 함수가 이 거리 차를 `step_dt`로 나누므로 RewardManager의 시간 곱셈 후 실제 지급값은 **계수 × 새롭게 줄인 거리(m)**다. 대기·후퇴·기존 최소 거리로의 복귀는 추가 보상이 없고, 목표 허용 오차 안에서도 추가 보상은 없다. 선택된 환경의 리셋마다 기록을 초기화한다.
+
+Omni v2도 과거 최고 기록을 사용하지만, 초기 거리로 정규화해 +30/+40의 에피소드 보상 예산을 갖는다. Dex Omni는 초기 거리로 나누지 않으므로 초기 거리에 관계없이 새로 1 cm를 줄일 때 접근 +0.3, 목표 이동 +3을 지급한다. **30/300은 논문에 제시된 계수가 아니라 이 환경의 실험 기본값**이며 학습 성능은 아직 검증하지 않았다.
+
+Arm action rate/velocity 비용은 각각 −0.03의 제곱합, Hand action rate/velocity 비용은 각각 −0.03/−0.01의 제곱평균으로 유지한다. 물체 기울기 −2, 선반 충돌 −0.5 비용도 상속한다. `time`, `success`, `failure` 보상과 `terminations.success`는 v2와 같이 `None`이다. 선반 이동·충돌을 포함한 모든 실패 종료, Arm 속도 3 rad/s 종료, 10초 시간 제한도 v2와 같다.
+
+Scene·스폰·목표 이벤트를 상속하므로 물체는 기존 반지름 4 cm·높이 10 cm의 단일 실린더이며, 선반 중앙 반지름 2 cm 원판 스폰과 최대 15 cm 전방향 목표를 사용한다. 질량·마찰 랜덤화, 현재 물체 위치를 포함한 Actor/Critic 41D, Action 8D, 제어 50 Hz도 동일하다. 접근 보상은 상대 거리만 보므로 물체가 EEF 쪽으로 움직여도 지급될 수 있으며, 보상 자체가 접촉이나 직립을 증명하지는 않는다.
+
+```bash
+# Workspace 루트에서 Dex Omni 학습
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Dex-Omni-v0 --num_envs 2048 \
+  --experiment_name inspire_dex_omni \
+  --run_name dex_best_distance --headless
+
+# 생성된 Dex Omni 체크포인트 재생
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/play.py \
+  --task Isaac-Inspire-Dex-Omni-v0 --num_envs 1 \
+  --experiment_name inspire_dex_omni \
+  --checkpoint "<dex-omni-checkpoint.pt>" --real-time
+```
+
+`--sweep-direction`은 생략한다. 기본 PPO 로그 이름은 Baseline과 같으므로 위 `--experiment_name`을 사용하면 `logs/rsl_rl/inspire_dex_omni`에 저장한다. 위 명령은 실행 안내이며, 이번 구현의 실제 train/play 수행이나 학습 성공 결과를 뜻하지 않는다.
+
+Omni 베이스와 모든 파생 환경(Dex Omni 포함)은 로컬 `mdp/reward_functions/goal_rewards.py`의 `action_rate_l2`·`joint_vel_l2` 네 항을 반드시 상속한다. raw Action 변화량과 이름으로 선택한 실제 관절 속도를 제곱합하며, 보상 내부 clamp·평균·정규화는 사용하지 않는다. 계수와 필수 사용 규칙은 [개발 지침](../../example/Contact-Rich-Manipulation-Context/00_guidelines/09_DEVELOPMENT_GUIDE.md)을 따른다.
+
+## Omni v4: 종료 기준 완화와 pushing 속도 비용
+
+`Isaac-Inspire-Sweep-Omni-v4`는 `InspireSweepOmniV4EnvCfg(InspireSweepOmniV3EnvCfg)`로 등록한다. Runtime은 `InspireSweepEnv`, PPO는 `InspireSweepPPORunnerCfg`다. V3의 41D Actor/Critic 관측, 8D Joint Position/Hand action, 높이 조건부 XY reaching(+30), 목표 진행(+40), 물체·목표 스폰, 질량·마찰 및 0.02 s 정책 주기를 상속한다.
+
+| 설정 | V4 값 |
+| --- | --- |
+| `hand_velocity` | Arm 6개 중 절대 관절속도 **5.0 rad/s 초과** 시 종료. 이름과 달리 Arm 대상 |
+| `object_outside_shelf` | `None`, 비활성 |
+| `success` | `None`, 비활성 |
+| `push_fast` | 대상 물체 3D 선속도 norm **0.5 m/s 초과** 시 종료 |
+| `rewards.pushing_speed` | `goal_rewards.pushing_speed_cost`, weight **−0.05**, `free_speed=0.3`, `reference_speed=0.5` |
+
+`object_drop`, 선반 충돌·선반 이동·timeout 종료는 유지한다. 선반 외곽 종료를 제거해도 물체 낙하·전도에 대한 종료는 남는다. 이벤트의 안전 목표 영역과 스폰은 그대로다. Arm/Hand action 변화와 실제 관절속도 네 비용은 기존 함수·계수(−0.03/−0.03/−0.03/−0.01)를 유지한다.
+
+2026-10-15 후속 요청으로 `2026-10-15_16-53-58_height_gated_xy_reach/params/env.yaml`의 공통 파라미터를 대조해 Arm 속도 threshold **5.0**을 코드에 적용했다. 기존 관측·action·actuator·접근/목표 보상·물성 설정은 저장 run과 같아 상속을 유지한다. V4 전용 물체 속도 0.5·외곽/성공 종료 비활성·속도 비용은 유지한다. [적용·검증 로그](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-15_omni_v4_saved_parameters.md).
+
+물체 속도 `v`는 `push_fast`와 같은 월드 선속도 **3D norm(m/s)**이다. 새 비용 함수는 `max(v−0.3, 0)² / (0.5−0.3)²`를 반환한다. 가중치 적용 후 값은 다음과 같다.
+
+```math
+c(v)=-0.05\left(\frac{\max(v-0.3,0)}{0.2}\right)^2.
+```
+
+0.3 m/s 이하는 비용이 없고 초과 구간에서는 제곱으로 증가한다. 함수는 상한 clamp를 두지 않으므로 종료 threshold를 넘는 transition도 실제 속도의 비용을 받는다. 요청의 −0.05는 **weight 적용 후, RewardManager의 시간 곱셈 전**으로 해석했다. 기존 dense 비용과 같이 `/step_dt`로 상쇄하지 않아 실제 step 기여는 `c(v) × step_dt`다.
+
+| 속도(m/s) | 가중치 적용 후 `c(v)` | 기본 0.02 s step 기여 |
+| --- | --- | --- |
+| 0.30 이하 | 0 | 0 |
+| 0.35 | −0.003125 | −0.0000625 |
+| 0.40 | −0.0125 | −0.00025 |
+| 0.45 | −0.028125 | −0.0005625 |
+| 0.50 | **−0.05** | **−0.001** |
+
+Workspace 루트에서 실행한다. Omni에는 `--sweep-direction`을 지정하지 않는다. 다음은 실행 안내이며 이번 구현에서 train/play를 수행한 것은 아니다.
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Sweep-Omni-v4 --num_envs 2048 \
+  --experiment_name inspire_sweep_omni_v4 \
+  --run_name quadratic_push_speed --headless
+
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/play.py \
+  --task Isaac-Inspire-Sweep-Omni-v4 --num_envs 1 \
+  --experiment_name inspire_sweep_omni_v4 \
+  --checkpoint "<v4-checkpoint.pt>" --real-time
+```
+
+상속·등록·CPU 검증과 미실행 범위는 [V4 개발 로그](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-15_omni_v4_speed_penalty.md)에 기록했다.
+
+### 추가 Arm 속도 페널티: `arm_speed_excess`
+
+V4는 기존 `joint_vel_l2` 등 모든 비용을 유지하면서 `goal_rewards.joint_speed_cost`를 추가한다. `terminations.hand_velocity`와 같은 Arm 6개 관절의 실제 절대속도를 검사하며, 어느 관절이든 빠르면 비용이 발생하도록 **최대 절대속도**를 사용한다. Hand 관절은 검사 대상이 아니다.
+
+```math
+v_{\max}=\max_{j\in\mathrm{Arm}}|\dot{q}_j|,\qquad c=-0.03\left(\frac{\max(v_{\max}-1.0,0)}{2.0-1.0}\right)^2.
+```
+
+설정은 `rewards.arm_speed_excess`, weight **−0.03**, `free_speed=1.0`, `reference_speed=2.0`, `asset_cfg=_arm()`이다. 1.0 rad/s 이하는 비용 0이며 초과 구간에서 제곱으로 증가한다. 음수 속도도 절댓값으로 처리하고, 2.0 이후에도 상한 없이 증가한다.
+
+| Arm 최대 절대속도(rad/s) | 가중치 적용 값 | 기본 0.02 s step 기여 |
+| --- | --- | --- |
+| 1.0 이하 | 0 | 0 |
+| 1.5 | −0.0075 | −0.00015 |
+| 2.0 | **−0.03** | **−0.0006** |
+| 3.0 | −0.12 | −0.0024 |
+| 5.0 | −0.48 | −0.0096 |
+
+`pushing_speed_cost`와 같이 dense 비용이므로 RewardManager의 시간 곱셈을 상쇄하지 않는다. 위 −0.03은 **weight 적용 후, 시간 곱셈 전**이다. 기존 `arm_joint_velocity`는 Arm 속도 전체의 제곱합에 비용을 주고, 이 새 항은 가장 빠른 관절의 1.0 초과 구간에 추가 비용을 준다. 두 항은 함께 적용된다. 종료 기준은 기존 **5.0 rad/s 초과**로 유지하며 이 새 항 자체는 종료시키지 않는다.
+
+[추가·검증 로그](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-15_omni_v4_arm_speed_excess.md).
+
+## Omni Renewal 환경
+
+Renewal은 Baseline 위에 장면·보상·종료·이벤트를 구성하고 현재 지수 속도 비용을 사용한다. V4와 환경 상속 체인은 별개다.
+
+| Gym ID | 환경 설정 | 보상 설정 |
+| --- | --- | --- |
+| `Isaac-Inspire-Sweep-Omni-Renewal-v0` | `InspireSweepOmniRenewalEnvCfg` | `OmniRenewalRewardsCfg` |
+| `Isaac-Inspire-Dex-Sweep-Omni-Renewal-v0` | `InspireDexSweepOmniRenewalEnvCfg` | `DexOmniRenewalRewardsCfg` |
+
+환경 상속은 `InspireSweepEnvCfg → InspireSweepOmniRenewalEnvCfg → InspireDexSweepOmniRenewalEnvCfg`다. Renewal은 Baseline 장면·관측·action·command·주기 위에 `OmniRenewalEventsCfg`, `OmniRenewalRewardsCfg`, `OmniRenewalTerminationsCfg`를 구성하며, V1→V2→V3→V4의 설정 변경 체인을 상속하지 않는다. 선반 기하 상수와 기존 로컬 함수, `RealisticPhysicsEventsCfg` 및 `apply_realistic_physics`를 재사용한다. Dex Renewal은 Renewal을 직접 상속하며 Dex 접근·목표 보상과 공통 지수 속도 비용 두 항을 사용한다. 보상 Cfg 상속은 `OmniRenewalRewardsCfg → DexOmniRenewalRewardsCfg`다.
+
+두 환경의 runtime은 `InspireSweepEnv`, PPO는 `InspireSweepPPORunnerCfg`다. Actor/Critic은 현재 물체 GT를 포함하는 같은 41D, action은 Arm Joint Position 6D + Hand 2D, 정책 주기는 0.02 s, episode 제한은 10 s다. 물체·목표 스폰과 질량·마찰, 센서·초기 상태는 현재 V4와 동일하다.
+
+| 보상·종료 | Sweep Renewal | Dex Sweep Renewal |
+| --- | --- | --- |
+| `reaching` | `HeightGatedPlanarReachProgress`, +30; XY·초기 거리 정규화·Z +9 cm / ±2 cm gate | `DexReachProgress`, +30 reward/m; 3D 실제 기록 개선 거리, 높이 gate 없음 |
+| `goal_distance` | `PlanarGoalProgress`, +40; 초기 목표 거리 정규화 | `DexPlanarGoalProgress`, +300 reward/m; 실제 XY 기록 개선 거리 |
+| 네 필수 운동 비용 | Arm/Hand raw action 변화 제곱합 −0.03/−0.03, 실제 관절속도 제곱합 −0.03/−0.01 | 동일 |
+| `object_tilt`, `shelf_collision` | 기존 함수·계수 −2.0 / −0.5 | 동일 |
+| `pushing_speed` | free_speed 0.3의 지수 비용, weight −1.0 | 동일 |
+| `arm_speed_excess` | 최대 Arm 절대속도, free_speed 1.0의 지수 비용, weight −1.0 | 동일 |
+| Arm 속도 종료 | 최대 절대속도 5.0 rad/s 초과 | 동일 |
+| 물체 속도 종료 | 3D 선속도 0.8 m/s 초과 | 동일 |
+| 외곽·성공 종료 | 비활성 | 동일 |
+| 기타 종료 | 물체 낙하·전도, 선반 충돌·변위, timeout 유지 | 동일 |
+
+두 환경은 활성 reward 10개를 사용한다. 시간 비용·성공/실패 terminal reward는 비활성이다. Dense 비용에는 RewardManager가 `weight × step_dt`를 적용하며, 진행 보상 함수는 기존 구현대로 시간 곱셈을 상쇄한다. Dex Renewal의 접근·목표 두 항은 `DexOmniRewardsCfg`의 함수·가중치·params와 동일하다. 이후 부모의 `__post_init__`가 이 두 항을 높이 gate 보상으로 다시 바꾸지 않는 구조다.
+
+Workspace 루트에서 실행한다. `--sweep-direction`은 생략한다. 기본 PPO 로그 폴더를 공유하므로 명령의 `--experiment_name`으로 구분한다.
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Sweep-Omni-Renewal-v0 --num_envs 2048 \
+  --experiment_name inspire_sweep_omni_renewal --run_name renewal_v0 --headless
+
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/play.py \
+  --task Isaac-Inspire-Sweep-Omni-Renewal-v0 --num_envs 1 \
+  --experiment_name inspire_sweep_omni_renewal \
+  --checkpoint "./2026-10-15_22-04-03_renewal_v0/model_24000.pt" --real-time
+
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Dex-Sweep-Omni-Renewal-v0 --num_envs 2048 \
+  --experiment_name inspire_dex_sweep_omni_renewal --run_name dex_renewal_v0 --headless
+
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/play.py \
+  --task Isaac-Inspire-Dex-Sweep-Omni-Renewal-v0 --num_envs 1 \
+  --experiment_name inspire_dex_sweep_omni_renewal \
+  --checkpoint "./logs/TEMP2/2026-10-15_22-04-26_dex_renewal_v0/model_30600.pt" --real-time
+```
+
+위 명령은 실행 안내이며 이번 추가 작업에서 새 학습·재생을 수행하지 않았다.
+
+코드: [Renewal 설정](inspire_sweep_baseline/envs/sweep_omni_renewal_envs.py), [Dex Renewal 설정](inspire_sweep_baseline/envs/sweep_omni_renewal_envs.py). [구현·검증 로그](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-15_omni_renewal_environments.md).
+
+### Reaching 이탈 페널티 정정 (2026-10-15)
+
+`HeightGatedPlanarReachProgress`는 현재 물체와 EEF의 XY 거리에서 10cm를 뺀 비음수 거리를 이전 episode 최소 기록과 비교한다. 새 기록에는 높이 gate 안에서 보상, 기록보다 먼 상태에는 높이와 관계없이 매 step 페널티를 적용한다. 10cm 이내 이동과 과거 기록 복귀에는 재보상이 없다. 물체 이동으로 인한 이탈도 포함한다. 초기 남은 거리로 정규화하되 초기부터 반경 안이면 10cm로 나눈다. RewardManager의 dt 곱셈은 함수 내 나눗셈으로 상쇄된다.
+
+물체 link 원점은 바닥 중심이며 Z +9cm가 맞다(직립한 높이 10cm 물체의 기하 중심 +4cm). 이 변경은 공통 함수를 쓰는 Omni v3/v4/Sweep Renewal에 적용되고 Dex reaching에는 적용되지 않는다.
+
+## Renewal OSC 환경
+
+`Isaac-Inspire-Sweep-Omni-Renewal-OSC-v0`는 `InspireSweepOmniRenewalOSCEnvCfg(InspireSweepOmniRenewalEnvCfg)`다. Arm을 Isaac Lab `OperationalSpaceControllerActionCfg`로 교체하고 부모 `OmniRenewalRewardsCfg`의 지수 속도 비용 두 항을 상속한다. 제어점은 `scene.ee_frame`의 첫 target과 같은 body(`axia80_link`), 위치 및 quaternion offset을 사용한다.
+
+- Arm action: relative pose 6D (`pose_rel`), fixed impedance. 위치 scale 0.05m, axis-angle 회전 scale 0.1rad. task frame 미지정으로 robot root 좌표계를 사용한다.
+- OSC: 모든 6축 stiffness 200, damping ratio 1, 관성 보정 및 중력 보상 사용.
+- 토크 출력과 중복되지 않도록 Arm implicit actuator stiffness/damping은 0. 노력·속도 제한은 부모 설정을 상속한다.
+- Hand 2D와 관측 41D, 속도 비용 두 항 외 reward, termination/event, 물성, reset, PPO는 부모와 같다. raw Arm action 페널티는 Cartesian 6D 입력 변화량에 적용된다.
+
+Workspace 루트에서 실행:
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Sweep-Omni-Renewal-OSC-v0 --num_envs 2048 \
+  --experiment_name inspire_sweep_omni_renewal_osc --run_name renewal_osc_v0 --headless
+
+
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/play.py \
+  --task Isaac-Inspire-Sweep-Omni-Renewal-OSC-v0 --num_envs 1 \
+  --experiment_name inspire_sweep_omni_renewal_osc \
+  --checkpoint "./logs/rsl_rl/inspire_sweep_omni_renewal_osc/2026-10-15_22-12-35_renewal_osc_v0/model_6300.pt" --real-time
+```
+
+Joint Position 정책과 action 의미가 달라 새 정책으로 학습한다. 현재 지수 비용 적용과 상속을 CPU에서 검증했으며 실제 실행 및 장시간 학습 검증 범위는 최신 개발 로그를 따른다.
+
+### 재생 배속
+
+`play.py --real-time --playback-speed 0.25`는 물리 dt와 제어 주기를 유지하고 step 사이 대기만 늘려 1/4 속도로 재생한다. `--playback-speed` 기본값은 1.0이며 양의 유한수만 허용한다. `--real-time` 없이 실행하면 기존처럼 최대 처리 속도로 실행한다. 배속은 실시간 화면 pacing에 적용되며 녹화 영상 FPS를 변경하지 않는다.
+
+### Renewal 계열 선반 종료와 목표 시각화 (2026-10-16)
+
+`OmniRenewalTerminationsCfg`에서 `terminations.shelf_collision.params["check_fingers"] = False`를 설정한다. Renewal과 OSC·Dex Renewal을 포함한 모든 파생 환경에 적용된다. 선반 root 6D 속도 norm > 0.1 또는 손목 frame Z가 선반 root Z +1.05m 기준 7cm 미만이면 종료한다. 손가락 frame 높이는 종료에 사용하지 않는다. Renewal 계열 밖의 환경은 기본값 True로 기존 판정을 유지하며 선반 보상 항은 변경하지 않았다.
+
+Renewal 부모의 `commands.target_goal_pos.debug_vis=True`를 모든 파생 환경이 상속하여 현재 목표 월드 위치에 반지름 2.5cm 초록색 구형 마커를 표시한다. reset 이후 command 위치를 따라 갱신되며 충돌용 형상이 아니다. 현재 사용자 설정인 OSC 위치/회전 scale 1.0/1.0은 유지했다.
+
+### Renewal 17채널 Tactile 환경 (2026-10-16)
+
+각 부모를 직접 상속하며 Scene의 센서 view와 tactile 관측을 교체하고 공통 지수 속도 비용 두 항을 사용한다. Arm/Hand 제어, 물성·중력, 다른 보상·종료·이벤트, 나머지 관측과 노이즈는 부모 설정을 유지한다.
+
+| 새 Gym task ID | 부모 Cfg | 새 Cfg | 기본 실험 폴더 |
+| --- | --- | --- | --- |
+| `Isaac-Inspire-Tactile-Sweep-Omni-Renewal-v0` | `InspireSweepOmniRenewalEnvCfg` | `InspireTactileSweepOmniRenewalEnvCfg` | `logs/rsl_rl/inspire_tactile_sweep_omni_renewal` |
+| `Isaac-Inspire-Dex-Tactile-Sweep-Omni-Renewal-v0` | `InspireDexSweepOmniRenewalEnvCfg` | `InspireDexTactileSweepOmniRenewalEnvCfg` | `logs/rsl_rl/inspire_dex_tactile_sweep_omni_renewal` |
+
+Standalone `run_probe_test.py --pad-layout original`과 같은 원본 Hand 패드와 `ProjectedTactileContactBits`를 사용한다. 직접 패드 접촉의 NetForce 크기 또는 센서 영역에 매핑한 부모 링크 접촉력의 벡터합 크기가 **0.01 N 이상**이면 `1.0`, 아니면 `0.0`이다. 두 경로의 판정은 OR로 결합한다. 센서 간 힘을 합산하지 않으며, reset 직후 아직 갱신되지 않은 행은 0이다. 직접 경로는 모든 충돌 상대, 부모 영역 투영은 기존 GPU 지원 방식에 따라 `mass_cylinder` 접촉을 읽는다.
+
+채널 순서는 손바닥 1개 → 엄지 1–4 → 검지·중지·약지·소지 각각 1–3으로 **17개**다. 기존 policy의 촉각 위치에 1D 대신 17D를 넣으므로 Actor/Critic 관측은 `34 + 17 + 6 = 57D`, Action은 **8D**다. 기존 41D 정책은 입력 크기가 다르므로 새 정책으로 학습한다. 패드를 옮기는 `exposed` 검증 배치나 standalone의 무중력·고정 자세는 적용하지 않는다.
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Tactile-Sweep-Omni-Renewal-v0 \
+  --num_envs 2048 --run_name tactile_renewal_v0 --headless
+
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Dex-Tactile-Sweep-Omni-Renewal-v0 \
+  --num_envs 2048 --run_name dex_tactile_renewal_v0 --headless
+```
+
+PPO는 부모와 같고 기본 실험 폴더 이름만 분리한다. 두 task 모두 GPU 8개 환경에서 1 iteration 학습을 완료해 57D 입력과 8D 출력을 확인했다. 장시간 학습 성능과 2048개 환경 처리 속도는 미검증이다.
+
+[환경 설정](inspire_sweep_baseline/envs/sweep_omni_renewal_envs.py) · [PPO 설정](inspire_sweep_baseline/agent/sweep_omni_renewal_ppo_cfg.py) · [구현·검증 기록](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-16_tactile_renewal_environments.md).
+
+### Renewal 네 환경의 공통 지수 속도 페널티
+
+현재 아래 네 환경 모두 `pushing_speed`, `arm_speed_excess`에 Renewal 부모의 지수 비용을 적용한다. OSC를 포함한 Renewal 계열의 해당 두 비용은 exp다. Renewal 밖의 Omni v4는 기존 제곱 속도 비용을 유지한다.
+
+| Gym task ID | 적용 |
+| --- | --- |
+| `Isaac-Inspire-Sweep-Omni-Renewal-v0` | Renewal 기본 지수 rewards |
+| `Isaac-Inspire-Dex-Sweep-Omni-Renewal-v0` | Dex rewards가 공통 지수 rewards 상속 |
+| `Isaac-Inspire-Tactile-Sweep-Omni-Renewal-v0` | Renewal 부모에서 상속 |
+| `Isaac-Inspire-Dex-Tactile-Sweep-Omni-Renewal-v0` | Dex 부모에서 상속 |
+
+두 양의 비용 함수는 `expm1(2 * max(x - t, 0)) / 2`를 반환하며 weight는 모두 -1.0이다. 물체 항은 대상 물체의 3D 선속도 norm과 임계값 0.3m/s, Arm 항은 6개 Arm 관절의 최대 절대 속도와 임계값 1.0rad/s를 사용한다. 임계값 이하에서 0이고 초과하면 지수적으로 감소한다. reference_speed 정규화나 상한은 없으며 RewardManager의 step_dt 곱셈을 유지한다.
+
+당시 두 Tactile v1 환경은 중복이므로 등록·Cfg·전용 PPO를 삭제했다. 이후 아래 변경을 갖는 Dex Tactile v1을 새로 추가했다. 위의 v0 실행 명령을 사용한다. 촉각 관측 57D, 행동 8D, 센서·제어·물성·이벤트·나머지 보상과 종료는 유지한다. 종료 기준은 물체 속도 >0.8m/s, Arm 관절 절대 속도 >5.0rad/s다. 기존 제곱 함수는 보존하지만 일반 Sweep Renewal v0도 지수 속도 비용을 사용한다.
+
+[촉각 v0 설정](inspire_sweep_baseline/envs/sweep_omni_renewal_envs.py) · [공통 rewards](inspire_sweep_baseline/mdp/rewards/sweep_omni_renewal.py) · [새 비용 함수](inspire_sweep_baseline/mdp/reward_functions/goal_rewards.py) · [정리·검증 로그](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-16_tactile_v0_exponential_cleanup.md).
+
+[Renewal 계열 속도 초과 비용의 exp 통일·검증 기록](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-16_renewal_only_exponential.md). `joint_vel_l2` 등 별도 운동 제곱합 페널티는 기존 규칙대로 유지한다.
+
+
+### Contact Sweep v0 — 독립 기준 환경
+
+2026-10-20 사용자 요청으로 Renewal v3의 최종 동작을 독립된 기준 환경 **`Isaac-Inspire-Contact-Sweep-v0`**로 구성했다. 기존 v3의 클래스와 설정은 보존한다. 새 환경은 기존 Baseline/Omni/Renewal 환경 Cfg를 import하거나 상속하지 않는다.
+
+[`envs/contact_sweep_envs.py`](inspire_sweep_baseline/envs/contact_sweep_envs.py)에서 Manager별 클래스를 직접 정의한다.
+
+| 파일 | 클래스·책임 |
+| --- | --- |
+| `runtime/sweep.py` | `ContactSweepEnv(ManagerBasedRLEnv)`: 센서 freshness·reset Action 이력 |
+| `envs/sweep_envs.py` | `ContactSweepEnvCfg(ManagerBasedRLEnvCfg)`: Manager 조합·물리·제어 주기 |
+| `scene_cfg.py` | `ContactSweepSceneCfg(InteractiveSceneCfg)`: 자산·frame·촉각 view |
+| `observations_cfg.py` | `ContactSweepObservationsCfg`: Actor/Critic의 동일한 57D policy 순서 |
+| `actions_cfg.py` | `ContactSweepActionsCfg`: Arm Joint Position 6D + Hand 2D |
+| `commands_cfg.py` | `ContactSweepCommandsCfg`: 에피소드 고정 목표 |
+| `events_cfg.py` | `ContactSweepEventsCfg`: reset·스폰·물성 이벤트 |
+| `rewards_cfg.py` | `ContactSweepRewardsCfg`: 10개 활성 보상 전체 선언 |
+| `terminations_cfg.py` | `ContactSweepTerminationsCfg`: 실패·timeout 전체 선언 |
+| `ppo_cfg.py` | `ContactSweepPPORunnerCfg(RslRlOnPolicyRunnerCfg)`: 독립 PPO 설정 |
+| `common.py` | 기하·질량 상수와 Arm 관절 선택 |
+
+로봇 USD·spawn 유틸리티·MDP 계산 함수는 공통 모듈을 재사용한다. `goal_rewards.action_rate_l2`·`joint_vel_l2`의 Arm/Hand 네 운동 페널티와 계수도 그대로 사용한다. 목표 보상 94, 접근 보상 30, pushing_speed free_speed=0.2 m/s·weight=−2, 질량 중심 0.5475 kg·범위 0.345–0.750 kg, 0.02초 제어·최대 10초를 명시했다. 현재 물체 GT를 포함한 관측이므로 최종 Blind 환경으로 해석하지 않는다.
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Contact-Sweep-v0 --num_envs 2048 --headless
+
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/play.py \
+  --task Isaac-Inspire-Contact-Sweep-v0 --num_envs 1 \
+  --checkpoint "<checkpoint.pt>" --real-time
+```
+
+실험 폴더는 `logs/rsl_rl/inspire_contact_sweep`다. CPU 관련 검사 **131개 통과**, GPU 8 env·1 iteration 완료. v3 smoke와 저장 환경 YAML은 log_dir 외 동일하고 PPO는 experiment/run 이름 외 동일했다. 같은 seed의 1 iteration 후 Actor/Critic tensor도 전부 일치했다. 장시간 학습·실물 성능은 미검증이다. [구현·검증 기록](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-20_contact_sweep_reference.md).
+
+### Contact Sweep Clutter v0 — 장애물 초기 관측과 MLP 임베딩
+
+`Isaac-Inspire-Contact-Sweep-Clutter-v0`는 `ContactSweepEnv`·`ContactSweepEnvCfg`·`ContactSweepPPORunnerCfg`를 상속한다. 구현은 [`envs/contact_sweep_clutter_envs.py`](inspire_sweep_baseline/envs/contact_sweep_clutter_envs.py)에 있다. 부모의 중앙 반경 2 cm 타겟 스폰, 최대 15 cm 목표와 선반 ±X 각각 15° 방향 제외, 고정 초기 관절 자세를 유지한다.
+
+목표를 먼저 확정하고 [`src/scene_randomization`](../scene_randomization/LOGIC.md)의 장애물 배치 규칙을 적용한다. 장애물은 **3개 고정**이며 뒤쪽 GRAY 1개, WHITE 2개다. RED 제외 반경은 **10.3 cm**(물체 반지름 4 cm × 2 + 여유 2.3 cm)로, 최초 v0의 8.3 cm에서 2 cm 확대했다. 형태와 전면 방향 확장 규칙은 유지한다. RED 회피, Tool/Wrist 전면 점유, 물체 간격, 셀·국소 밀도와 손가락 접근 경로 조건을 재사용한다. 장애물 배치 재시도에서도 타겟·목표는 바꾸지 않으며, 시도 상한에 도달하면 오류로 명시한다. 참조 생성기의 360°·5–20 cm 목표 및 넓은 타겟 스폰 분포는 사용자 선택에 따라 적용하지 않는다.
+
+원본 cm 좌표 `(x, y)`는 선반 로컬 m 좌표 `(0.20-y/100, x/100)`로 변환한다. 원본 −Y 전면 방향은 로봇 쪽인 선반 +X가 된다. 타겟은 파란색, 장애물은 주황색이다. 모든 실린더는 반지름 4 cm·높이 10 cm와 같은 질량·관성·마찰·충돌 설정을 사용한다. 매 reset에서 타겟의 물성 샘플을 모든 장애물에 동일하게 적용한다.
+
+| 구성 | 부모 대비 변경 |
+| --- | --- |
+| `object_tilt` | 기존 물체별 비용 `clip((angle−5°)/(0.9−5°), 0, 1)²`를 타겟과 장애물 총 4개에 합산. weight −2 유지 |
+| `object_drop` | 어떤 물체든 기존 높이 1.04 m 미만 또는 선반 법선 대비 tilt ≥0.9 rad이면 종료 |
+| 17D 촉각 | 직접 패드 접촉에 더해 손가락 본체 투영 필터에 타겟·장애물 총 4개 모두 포함 |
+| `obstacles` 관측 | `[HEADER, x, y, z] × 10` = 40D. 실제 장애물 3개는 HEADER=1, 나머지 7개는 전부 0 |
+| 초기 위치 | 타겟과 같은 robot-root frame, 단위 m, 실린더 밑면 중심. reset 때 각 축 ±1 cm 노이즈를 한 번 추가하고 episode 동안 고정 |
+| 정책·가치망 | 별도 학습 가능한 `40 → 32(ReLU) → 16` 인코더를 각각 사용, 기존 57D에 연결해 73D 입력 |
+
+기존 타겟 위치는 현재값이며 장애물만 초기 관측이다. rollout에는 `policy` 57D와 `obstacles` 40D를 저장하고 PPO 미니배치에서 임베딩을 다시 계산하므로 인코더까지 학습된다. Checkpoint는 인코더·optimizer를 포함하며 JIT/ONNX export도 인코더를 포함한다. Export의 외부 입력은 `[policy57, obstacles40]` 순서의 **97D**, 내부 정책망 입력은 **73D**다.
+
+나머지 보상·종료, Action 8D, Arm/Hand 네 운동 페널티와 물리적 관절 속도 제한, 제어 주기·PPO hyperparameter는 상속한다. 물체 속도 비용·`push_fast`는 기존처럼 타겟만 검사한다. 기존 57D 단일 물체 checkpoint와 입력·모델 구조가 다르므로 이 task로 학습한 checkpoint를 사용한다.
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Contact-Sweep-Clutter-v0 --num_envs 2048 --headless
+
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/play.py \
+  --task Isaac-Inspire-Contact-Sweep-Clutter-v0 --num_envs 1 \
+  --checkpoint "<clutter-checkpoint.pt>" --real-time
+```
+
+로그는 `logs/rsl_rl/inspire_contact_sweep_clutter`에 저장한다. 배치 계산은 checkout의 `src/scene_randomization/generator.py`를 읽기 전용으로 사용하므로 두 패키지를 함께 유지한다. 3개 장애물·RED 확장 변경은 [후속 검증 로그](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-20_clutter_red_expansion.md)에 기록했다. 최초 구현의 검증 명령·결과·미검증 범위는 [개발 로그](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-20_contact_sweep_clutter.md)에 기록한다.
+
+### Contact Sweep Clutter v1 — 초기 타겟 관측과 보상 균형
+
+2026-10-20 후속: `shelf_failure`는 `shelf_collision` 실패의 마지막 step 보상에서 **−3을 한 번** 차감한다. 실패 판정 후 reset 전에 계산하며 `dt`를 상쇄한다. Timeout 또는 다른 실패만 발생한 경우에는 0이다. v2도 상속한다. [구현·검증 기록](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-20_clutter_v1_shelf_failure.md).
+
+`Isaac-Inspire-Contact-Sweep-Clutter-v1`는 Clutter v0의 Env·EnvCfg·관측·보상·PPO 설정을 상속한다. 구현은 [`envs/contact_sweep_clutter_envs.py`](inspire_sweep_baseline/envs/contact_sweep_clutter_envs.py)에 있으며 runner는 `ContactSweepClutterV1PPORunnerCfg`, 로그 경로는 `logs/rsl_rl/inspire_contact_sweep_clutter_v1`다.
+
+Actor의 `policy.target_obs_state` 3D는 현재 타겟 위치에서 **episode 시작 위치**로 바뀐다. `InitialObjectPositionInRoot`가 reset 때 Command가 저장한 타겟 link 원점을 robot-root frame으로 변환해 고정한다. Initial Privileged 환경처럼 각 좌표에 reset당 한 번 ±1 cm 오차를 더하며 매 step 새로 측정하지 않는다. Critic 전용 `privileged.target_position` 3D는 현재 타겟 위치를 같은 frame에서 매 step 읽고 관측 노이즈를 추가하지 않는다. 기존 `agent/sweep_ppo_cfg.py`의 비대칭 라우팅을 따르되, Critic 추가 정보는 요청한 위치 3D로 한정한다.
+
+| 경로 | 원시 입력 | 장애물 인코더 이후 |
+| --- | --- | --- |
+| Actor | `policy` 57D + `obstacles` 40D = 97D | 57D + 16D = 73D |
+| Critic | `policy` 57D + `privileged` 3D + `obstacles` 40D = 100D | 57D + 3D + 16D = 76D |
+
+장애물 입력은 v0의 `[HEADER,x,y,z] × 10`, 실제 3칸·더미 7칸과 초기 위치 노이즈를 상속한다. Actor/Critic은 각각 `40 → 32(ReLU) → 16` 인코더를 학습한다. Actor export 입력은 97D이며 현재 타겟 GT를 요구하지 않는다. 보상 계산용 `_initial_object_positions_w`는 모든 reset 배치가 끝난 뒤 실제 월드 XYZ를 별도로 저장한다. 이 정확한 위치에는 Actor의 타겟·장애물 관측 오차를 섞지 않는다.
+
+| 보상 항 | 계수 | v1 식·조건 |
+| --- | ---: | --- |
+| `reaching` | 30.0 | 기존 최선 접근 거리의 개선량 유지 |
+| `goal_distance` | 100.0 | 기존 최선 목표 XY 거리의 개선량; v0 계수 94.0에서 조정 |
+| `goal_hold` | 0.9 | 월드 XY 목표 반경 0.01 m 이내이면 1, 이외 0 |
+| `contact_any` | 0.16 | 17개 tactile bit 중 하나 이상 ON이면 1 |
+| `contact_count` | 0.16 | `min(ON 개수, 5) / 5` |
+| `obstacle_displacement` | −5.0 | 타겟을 제외한 초기 대비 XYZ 이동 거리 제곱합, 최대 0.04 m² |
+
+신규 항은 RewardManager가 `weight × raw × step_dt`로 누적한다. `goal_hold`는 조건 안에서 초당 +0.9로 일정하며 5초 유지하면 +4.5다. 목표의 월드 Z·속도·연속 유지 이력은 조건에 사용하지 않는다. Contact 두 항은 현재 정책과 같은 tactile 판정을 공유하며 각각 최대 초당 +0.16이다. 5개 이상을 7초 유지하면 +1.12 +1.12 = +2.24다. 장애물 2개가 시작 위치에서 각각 10 cm 떨어진 채 10초 있으면 −1.0, 모든 장애물 이동 비용의 상한은 초당 −0.2·10초당 −2.0이다. 타겟 이동과 관측 노이즈는 이 비용에 포함되지 않는다.
+
+`pushing_speed.free_speed`는 0.2→1.0 m/s, `arm_speed_excess.free_speed`는 1.0→0.5 rad/s다. 기존 가중치 −2/−1과 출력 상한 100은 유지한다. Arm/Hand action rate·joint velocity 네 항은 로컬 `goal_rewards.action_rate_l2`·`joint_vel_l2`, raw 제곱합과 −0.03/−0.03/−0.03/−0.01 계수를 그대로 사용한다.
+
+부모의 장애물 배치·물성·8D Joint Position action·0.02초 제어·10초 timeout·실패 종료를 상속한다. 목표 도달로 종료하지 않는다. 특히 `push_fast`의 0.8 m/s 종료는 그대로이므로 보상의 free speed 1.0은 종료 속도 완화를 의미하지 않는다.
+
+계수는 `logs/backup/Isaac-Inspire-Contact-Sweep-Clutter-v0/2026-10-20_14-04-31`의 9,655개 iteration을 기준으로 정했다. 목표 유지 5초·5개 tactile 접촉 7초를 가정하면 **양의 네 보상 그룹 합**에서 Reaching/Goal distance/Goal 유지/Contact가 각각 **34.92/34.61/20.35/10.13%**, 마지막 1,000개 기준 **33.88/36.91/19.50/9.71%**다. 이는 기존 progress를 재가중한 시나리오이며 새 정책에서 실제 측정된 비중은 아니다. 음의 페널티는 이 분모에서 제외해 별도로 비교한다.
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Contact-Sweep-Clutter-v1 --num_envs 2048 --headless
+
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/play.py \
+  --task Isaac-Inspire-Contact-Sweep-Clutter-v1 --num_envs 1 \
+  --checkpoint "<clutter-v1-checkpoint.pt>" --real-time
+
+python src/inspire_sweep_baseline/scripts/analyze_clutter_rewards.py \
+  --log-dir logs/backup/Isaac-Inspire-Contact-Sweep-Clutter-v0/2026-10-20_14-04-31 --last-n 1000 \
+  --output /tmp/clutter_v1_calibration_last1000.json
+```
+
+분석 스크립트는 TensorBoard가 설치된 Python으로 실행한다. `--last-n 0` 또는 생략 시 전체 iteration을 사용한다. `--log-dir`를 새 v1 run으로 바꾸면 기존 가정치와 실제 신규 보상 그룹 비중을 함께 확인할 수 있다. 저장된 `params/env.yaml`의 계수를 읽으며 simulator를 시작하지 않는다. 재생은 관측 의미와 Critic 차원이 맞는 v1 checkpoint를 사용한다. [개발·검증 기록](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-20_contact_sweep_clutter_v1.md)에 계산 근거와 실제 검증 범위를 기록한다.
+
+### Contact Sweep Clutter Curriculum v1 — Learning iteration 기반 보상
+
+`Isaac-Inspire-Contact-Sweep-Clutter-Curriculum-v1`는 현재 Clutter v1의 Env·Cfg·보상·PPO 설정을 상속한다. 구현은 [`envs/contact_sweep_clutter_envs.py`](inspire_sweep_baseline/envs/contact_sweep_clutter_envs.py), 일정은 [`curriculum_cfg.py`](inspire_sweep_baseline/mdp/curricula/contact_sweep_clutter.py)에서 관리한다.
+
+| 변경 대상 | 초기값 | 감소 주기 | 회당 감소량 | 최종값 |
+| --- | --- | --- | --- | --- |
+| `pushing_speed.params["free_speed"]` | 0.1 m/s | 3,000 iteration | 0.01 | 0.05 |
+| `arm_speed_excess.params["free_speed"]` | 1.0 rad/s | 5,000 iteration | 0.05 | 0.8 |
+| `arm_action_rate.weight` | −0.03 | 3,000 iteration | 0.005 | −0.06 |
+| `arm_joint_velocity.weight` | −0.03 | 3,000 iteration | 0.005 | −0.06 |
+
+로그의 0-based **Learning iteration**을 사용한다. 첫 변경은 각각 3,000·5,000 iteration의 rollout 첫 step 전에 적용한다. 이후 최종값에 도달하면 고정한다. `CurriculumOnPolicyRunner`가 `learn()` 시작 iteration과 실제 `num_steps_per_env`로 rollout 경계를 추적하므로 병렬 환경 수·physics step·episode reset 횟수에 의존하지 않는다. 보상은 `CurriculumManager`에서 절대값으로 계산해 실행 중인 `RewardManager`에 반영한다. Reset을 반복해도 감소가 누적되지 않으며 진행 중인 모든 episode에도 같은 값이 적용된다.
+
+재개는 checkpoint 내부 `iter`를 사용한다. 설치된 RSL-RL 5.0.1이 저장 index부터 다시 시작하는 원래 동작을 유지한다. 재생은 checkpoint 단계에 고정한다. 직접 환경만 실행하면 iteration 0이며, 다른 실행기는 `set_learning_iteration(i)`를 연결해야 한다. 기본 train/play는 등록된 전용 runner를 자동 선택한다.
+
+사용자 명시 요청에 따라 이 환경의 Arm 두 가중치만 변화한다. Hand 가중치 −0.03/−0.01, 로컬 raw 제곱합 함수·출력 상한·dt 처리, v1 관측·Action·장면·reset·종료·나머지 보상은 상속한다. 별도 v2의 F/T 보정은 포함하지 않는다.
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Contact-Sweep-Clutter-Curriculum-v1 --num_envs 2048 --headless
+
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Contact-Sweep-Clutter-Curriculum-v1 --num_envs 2048 --headless \
+  --resume --load_run "<run-directory-name>" --checkpoint "model_15000.pt"
+
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/play.py \
+  --task Isaac-Inspire-Contact-Sweep-Clutter-Curriculum-v1 --num_envs 1 \
+  --checkpoint "<curriculum-checkpoint.pt>" --real-time
+```
+
+로그 폴더는 `logs/rsl_rl/inspire_contact_sweep_clutter_v1_curriculum`이다. TensorBoard의 `Curriculum/pushing_free_speed`, `Curriculum/arm_free_speed`, `Curriculum/arm_action_rate_weight`, `Curriculum/arm_joint_velocity_weight`에 reset 시점의 현재값을 기록한다. [실행한 검사와 GPU 미검증 범위](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-20_clutter_v1_curriculum.md)를 확인한다.
+
+### Contact Sweep Clutter v2 — F/T 하중 보정과 변화 비용
+
+`Isaac-Inspire-Contact-Sweep-Clutter-v2`는 Clutter v1의 Env·EnvCfg·관측·보상·PPO runner를 상속한다. [`envs/contact_sweep_clutter_envs.py`](inspire_sweep_baseline/envs/contact_sweep_clutter_envs.py)에 구현하며, 기본 로그 폴더는 `logs/rsl_rl/inspire_contact_sweep_clutter_v2`다.
+
+기존 `policy.wrist_wrench` 6D를 **Hand 중력·관성 하중을 차감한 EEF 기준점·EEF 축의 6축 반력**으로 교체한다. `axia80_feasibility`의 tool-only 차감 원리를 참조하되, 현재 Hand 자세·손가락 구성·가속도에 맞춘 모델 기반 보정을 사용한다. 하류 30개 강체의 실제 PhysX 질량·관성과 운동 상태를 사용하며 물체 GT·접촉 대상 ID를 보정 입력으로 사용하지 않는다. 고정 tare를 수집하지 않아 초기 접촉을 영점으로 지우지 않으며, 수치·solver 오차에 따른 잔여값은 남을 수 있다.
+
+새 `wrench_change` 비용은 같은 보정 표본을 월드 축으로 표현한 뒤 제어 step 사이 힘·모멘트 변화량을 계산한다. 각각 0.5 N·0.01 N·m까지 무비용이며, 초과분을 5 N·0.1 N·m로 나눈 제곱합의 절반을 최대 1로 제한한다. weight는 −0.1로 **초당 최대 −0.1·10초당 최대 −1**이다. 추가로 각 시점의 누적 비용을 **그때까지 실제로 얻은 양의 보상 합의 5%** 이하로 제한한다. 첫 유효 표본은 이력 초기화에만 사용하며 부분 reset 시 해당 환경의 이력·한도만 초기화한다.
+
+Actor 초기 타겟·Critic 현재 타겟, 원시 Actor 97D·Critic 100D와 인코더 후 73D·76D, 8D action·0.02초 제어·10초 timeout·실패 종료, 기존 14개 보상과 Arm/Hand 네 운동 비용의 함수·계수는 유지한다. F/T 관측 의미가 바뀌므로 v2로 새로 학습한 checkpoint 사용을 기본으로 한다.
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Contact-Sweep-Clutter-v2 --num_envs 2048 --headless
+
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/play.py \
+  --task Isaac-Inspire-Contact-Sweep-Clutter-v2 --num_envs 1 \
+  --checkpoint "<clutter-v2-checkpoint.pt>" --real-time
+```
+
+[보정·비용 계산식과 검증 기록](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-20_contact_sweep_clutter_v2.md)에 실제 실행 결과와 미검증 범위를 구분해 기록한다. 보정 모델과 비용 상한의 검증은 장기 학습의 밀기 성공률·충돌 회피 편향 개선을 입증하지 않는다.
+
+### Dex Tactile Renewal v3 — v1 상속, 질량·속도 비용·목표 보상 조정
+
+`Isaac-Inspire-Dex-Tactile-Sweep-Omni-Renewal-v3`는 `InspireDexTactileSweepOmniRenewalV1EnvCfg`를 직접 상속한다. Actor/Critic 57D, Joint Position 6D + Hand 2D, 0.02초 제어 주기와 기존 종료 조건을 사용한다.
+
+| 항목 | v1 | v3 |
+| --- | --- | --- |
+| pushing_speed free_speed | 0.3 m/s | 0.2 m/s |
+| pushing_speed weight | −1.0 | −2.0 |
+| goal_distance weight | 300.0 | 94.0 |
+| reaching weight | 30.0 | 30.0 |
+| 물체 질량 분포 중심 | 0.365 kg | 0.5475 kg |
+| 물체 질량 범위 | 0.230–0.500 kg | 0.345–0.750 kg |
+
+Goal 계수는 `logs/2026-10-19_12-15-47`의 마지막 10 iteration(39027–39036)에서 측정한 TensorBoard reaching 평균 0.778318, goal_distance 평균 3.314545를 사용했다. `300 × (4/3) × 0.778318 / 3.314545 = 93.9276`을 94로 반올림했다. 기존 궤적을 재가중하면 누적 기여가 약 +7.783 : +10.386으로 3:4가 된다. 이론상 최대 보상으로 산정하지 않았다. 질량·속도 비용을 바꾼 뒤 새로 학습한 정책에서 같은 기여 비율이 유지되는지는 별도 확인해야 한다.
+
+생성 질량과 reset 샘플을 모두 1.5배로 적용한다. 질량 노이즈도 비례 확대하며 관성은 질량에 맞게 갱신한다. 마찰 분포와 Arm/Hand 네 운동 페널티는 부모 설정을 상속한다. v2의 success/goal_hold 보상은 포함하지 않는다. PPO는 v1과 같고 실험 폴더는 `logs/rsl_rl/inspire_dex_tactile_sweep_omni_renewal_v3`다.
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Dex-Tactile-Sweep-Omni-Renewal-v3 \
+  --num_envs 2048 --headless
+
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/play.py \
+  --task Isaac-Inspire-Dex-Tactile-Sweep-Omni-Renewal-v3 \
+  --num_envs 1 --checkpoint "<v3-checkpoint.pt>" --real-time
+```
+
+[환경 설정](inspire_sweep_baseline/envs/sweep_omni_renewal_envs.py) · [구현·검증 기록](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-20_renewal_v3_reward_mass.md).
+
+### Dex Tactile Renewal v1
+
+2026-10-19: Arm actuator의 `velocity_limit_sim`을 shoulder pan/lift·elbow는 2.0 rad/s, wrist 1/2/3는 4.0 rad/s로 설정했다. v2·OSC v2도 상속한다. 관절 위치 범위는 유지하며 Arm 과속 종료 기준은 >5.0 rad/s 그대로다. PhysX가 적용하는 속도 제한으로, 순간 초과를 완전히 보장하는 상태 clamp는 아니다. [변경·검증 로그](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-19_v1_arm_velocity_limits.md).
+
+2026-10-19 후속 요청으로 아래 종료 진단 블록은 전체 주석 처리했다. 현재 v1·v2·OSC를 포함한 모든 환경에서 종료 진단 print가 비활성화되어 있다.
+
+2026-10-19 종료 진단: 공통 `InspireSweepEnv`가 reset 직전에 발생한 모든 종료 항목을 `[TERMINATION]`으로 print한다. 출력은 종료 이름·함수·timeout 여부·환경 번호·episode step이며, 동시 발생도 각각 표시한다. v1·v2·OSC 등 모든 파생 환경에 기존 명령으로 새로 실행하면 적용된다. [종료 출력 구현](inspire_sweep_baseline/runtime/sweep.py) · [변경·검증 로그](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-19_v1_termination_prints.md).
+
+이후 파생 작업의 기준 환경은 사용자 지정 `Isaac-Inspire-Dex-Tactile-Sweep-Omni-Renewal-v0`다. 이번 `Isaac-Inspire-Dex-Tactile-Sweep-Omni-Renewal-v1`은 해당 v0를 직접 상속한다.
+
+- 물체·Arm 지수 속도 비용에 각각 `_limit` 함수를 사용하고 반환 비용을 최대 100으로 제한한다. weight −1.0에서 시간 곱셈 전 −100, 0.02 s 스텝의 항별 기여 하한은 −2다. 지수 계산 전에 포화시켜 overflow를 방지한다.
+- `shelf_collision`의 손목 상대 높이 기준을 0.07 m에서 0.03 m로 낮춰 더 가까운 접근을 허용한다. 선반 속도·변위 검사는 유지한다.
+- 목표 방향은 선반 로컬 ±X 각각 ±15°를 제외하고 나머지 300°에서 균등 샘플링한다. 기존 좌·우 ±Y 방향은 허용한다.
+
+57D/8D 관측·행동과 센서, Dex 진행 보상, 네 필수 운동 비용·계수 및 나머지 설정은 상속한다. 기본 로그 폴더는 `logs/rsl_rl/inspire_dex_tactile_sweep_omni_renewal_v1`다.
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Dex-Tactile-Sweep-Omni-Renewal-v1 \
+  --num_envs 2048 --headless
+```
+
+[v1 환경 설정](inspire_sweep_baseline/envs/sweep_omni_renewal_envs.py) · [활성 환경 계약](../../example/Contact-Rich-Manipulation-Context/02_implementation/08_ACTIVE_ENVIRONMENTS.md) · [개발·검증 로그](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-16_dex_tactile_renewal_v1.md).
+
+### Dex Tactile Renewal v2: 목표 유지와 성공 보너스
+
+`Isaac-Inspire-Dex-Tactile-Sweep-Omni-Renewal-v2`는 **v1을 직접 상속**한다. v1의 지수 물체/Arm 속도 비용 상한 100·손목 높이 종료 기준 3 cm·선반 로컬 ±X 각각 ±15° 목표 방향 제외를 적용한다. 물체 위치의 반경 2 cm 분포는 그대로이며 v1의 스폰 관련 변경은 목표 방향 제한이다. 기존 57D Actor/Critic 관측(현재 물체 GT 포함), 8D Joint Position/Hand 행동·센서·물성·reset·보상·실패 종료 위에 다음 양의 보상 두 항을 추가한다. **성공으로 종료하지 않으며 기존 실패 또는 10초 timeout까지 유지한다.** 별도의 새 속도·위치 오차 비용과 Joint Position 액션 제한은 없다.
+
+- `success`: 목표 XY 오차 <1 cm, 물체 XY 속도 <0.02 m/s, 선반 법선 대비 기울기 ≤10°, 물체 바닥의 선반면 오차 ≤1 cm, 물체 반경을 고려한 선반 내부 지지를 **0.5초 연속** 만족하면 달성 보상을 지급한다. 기존 실패 조건이 동시에 발생하면 지급하지 않는다. 성공 termination은 비활성이다.
+- 성공 보상: `StableGoalAchievement`가 최초 달성을 기억해 **에피소드당 +100 한 번** 지급한다. 목표 이탈·재진입으로 다시 지급하지 않으며 실제 episode reset에서만 재지급 가능해진다. dt를 상쇄하므로 제어 주기에 따라 보너스가 달라지지 않는다.
+- `goal_hold`: 자격 조건을 만족한 연속 시간을 `h`라 할 때 보상률은 `20 × min(h / 0.5, 1)`/초다. 첫 스텝부터 증가하며 이탈하면 0으로 초기화되고 재진입하면 다시 증가한다. 성공 보상 term이 먼저 갱신한 카운터를 읽는다. 0.02초 주기에서는 +0.016부터 +0.4/스텝까지 증가한 뒤 **성공 이후에도 +0.4/스텝을 계속 지급**한다. 처음부터 10초 동안 자격을 유지하면 체류 보상 합계 +195.2, 성공 보너스 +100이다.
+
++100과 초당 최대 +20은 이번 구현의 초기 실험값이며 학습 성능으로 튜닝한 값은 아니다. 기본 로그 폴더는 `logs/rsl_rl/inspire_dex_tactile_sweep_omni_renewal_v2`다.
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Dex-Tactile-Sweep-Omni-Renewal-v2 \
+  --num_envs 2048 --headless
+
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/play.py \
+  --task Isaac-Inspire-Dex-Tactile-Sweep-Omni-Renewal-v2 \
+  --num_envs 1 --checkpoint "<v2-checkpoint.pt>" --real-time
+```
+
+[v2 설정](inspire_sweep_baseline/envs/sweep_omni_renewal_envs.py) · [초기 구현 기록](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-18_dex_tactile_renewal_v2_goal_hold.md) · [성공 후 timeout까지 유지하도록 수정](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-18_v2_goal_hold_until_timeout.md).
+
+현행 상속은 `v0 → v1 → v2 → OSC v2`이며 PPO runner도 같은 버전 상속을 따른다. 환경 ID·실행 명령·보너스 계수는 그대로다. [v1 상속 전환·검증](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-18_v2_inherits_v1.md).
+
+### Dex Tactile Renewal OSC v2
+
+`Isaac-Inspire-Dex-Tactile-Sweep-Omni-Renewal-OSC-v2`는 v2를 직접 상속하고 Arm 제어만 OSC로 바꾼다. Hand 제어, 57D 관측·8D 행동 크기, 센서·물성·스폰·기존 비용·종료, +100 성공 보너스·증가하는 유지 보상은 v2에서 상속한다. 기존 Arm 속도 종료 기준 5.0 rad/s는 유지하며 1.5 rad/s는 명령 범위 선택의 대략적인 목표다.
+
+- 기준은 `envs/sweep_omni_renewal_envs.py`의 fixed-impedance `pose_rel` OSC다. 제어점은 기존 EEF와 같은 `axia80_link` 및 pose offset이고 로봇 root 좌표계를 사용한다. 중력 보상·관성 decoupling·damping ratio 1.0을 유지한다.
+- `motion_stiffness_task=100.0`으로 낮춘다. OSC effort와 경쟁하지 않도록 기존 OSC처럼 Arm implicit PD의 stiffness/damping만 0으로 바꾼다.
+- Arm raw 6D는 위치 scale 0.005 m, 회전 scale 0.025 rad를 곱한 뒤 **이동 벡터 norm ≤0.005 m, 회전 벡터 norm ≤0.025 rad**로 각각 제한한다. 각 성분별 제한이 아니며 방향을 보존한다. 큰 Gaussian 출력에도 실제 명령의 상한이 적용된다. Hand나 raw Action 제곱합 보상 입력은 이 제한으로 바꾸지 않는다.
+- 현재 pose를 기준으로 매 0.02초 정책 스텝에 새 상대 목표를 생성한다. 한 명령당 증분 제한이며 누적 가동 범위를 제한하지 않는다. 관절 속도 보장은 아니며 자세·접촉과 controller 동역학에 따라 달라진다. upstream OSC에서 실제 적용되지 않는 `clip` 필드에 의존하지 않는다.
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Dex-Tactile-Sweep-Omni-Renewal-OSC-v2 \
+  --num_envs 2048 --headless
+
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/play.py \
+  --task Isaac-Inspire-Dex-Tactile-Sweep-Omni-Renewal-OSC-v2 \
+  --num_envs 1 --checkpoint "<osc-v2-checkpoint.pt>" --real-time
+```
+
+기본 로그 폴더는 `logs/rsl_rl/inspire_dex_tactile_sweep_omni_renewal_v2_osc`다. Joint Position v2와 action 의미가 다르므로 OSC 정책으로 학습·평가한다. 초기 0.1초의 명령 응답은 낮아졌지만, 이후에는 0 명령 대조군에서도 과속이 발생했다. 짧은 실행을 장시간 안정성이나 학습 성공으로 해석하지 않는다. [OSC v2 설정](inspire_sweep_baseline/envs/sweep_omni_renewal_envs.py) · [명령 제한 구현](inspire_sweep_baseline/mdp/action_functions/bounded_osc.py) · [실측 속도·검증 및 한계](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-18_dex_tactile_renewal_v2_osc.md).
+
+### Clutter F/T 테스트 — Curriculum v1 정책과 v2 하중 보정
+
+`Isaac-Inspire-Contact-Sweep-Clutter-FT-Test-v0`는 `ContactSweepClutterV1CurriculumEnv`와 `ContactSweepClutterV1CurriculumEnvCfg`를 상속한다. PPO 설정도 기존 Curriculum runner를 그대로 사용한다. Actor의 `policy57 + obstacles40`, Critic의 추가 `privileged3`, 원본 F/T 6D, 모든 보상·curriculum·행동·물리·종료 설정을 유지한다. v2의 `PureWrenchReader`를 별도 telemetry에 결합해 동일 동작에서 원본과 보정값을 취득한다. 아직 새 F/T 보상은 추가하지 않는다.
+
+Workspace 루트에서 Isaac Lab 실행 환경을 활성화한 뒤 실행한다. `--checkpoint`는 파일 또는 run 디렉터리이며, 디렉터리면 숫자 iteration이 가장 큰 모델을 선택한다. 출력 디렉터리는 새 경로여야 한다.
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/collect_clutter_ft.py --headless --num_envs 16 --steps 5000 --checkpoint logs/backup/Isaac-Inspire-Contact-Sweep-Clutter-Curriculum-v1/2026-10-20_22-49-30
+
+python src/inspire_sweep_baseline/scripts/validate_clutter_ft.py <output-directory>
+```
+
+기본 출력은 `outputs/clutter_ft/<UTC timestamp>/wrench.csv`와 `metadata.json`이다. `--steps`는 각 환경의 제어 step 수이며 learning iteration이 아니다. 제어 주기 0.02초의 마지막 physics substep을 읽으므로 16환경 ×5000 step은 80000행·환경당 누적 시뮬레이션 100초다. 기본 seed는 42이며 `--seed`로 변경한다. 정책 export나 학습 로그 쓰기는 수행하지 않는다.
+
+CSV의 핵심 열은 다음과 같다. 각 F/T prefix에는 `fx_N, fy_N, fz_N, mx_Nm, my_Nm, mz_Nm`가 붙는다.
+
+| 열 | 의미 |
+| --- | --- |
+| `v1_raw_eef_*` | 기존 정책과 동일한 v1 미보정 F/T 변환 |
+| `v2_raw_eef_*`, `v2_raw_world_*` | v2의 올바른 child joint frame 변환에 따른 보정 전 반력 |
+| `v2_support_eef_*`, `v2_support_world_*` | Hand 중력·관성 자체 하중 |
+| `v2_pure_eef_*`, `v2_pure_world_*` | v2 보정 F/T, raw − support |
+| `delta_pure_world_*`, `delta_force_norm_N`, `delta_moment_norm_Nm` | 인접 제어 step의 보정값 변화와 norm, 시간 미분 아님 |
+| `env_id`, `episode_id`, `episode_step`, `control_step` | 환경·episode·제어 step 식별 |
+| `sample_valid`, `delta_valid` | 표본·변화량 유효성. 보상 설계용 차분은 `delta_valid=1`만 사용 |
+| `terminated`, `time_out`, `done_*` | 종료 종류와 원인. 종료 직전 F/T도 reset 전에 저장 |
+| `tactile_*`, `tactile_count`, `goal_error_xy_m`, `inside_goal_1cm` | 접촉·목표 조건과 보상 설계용 context. 추가 정책 입력이 아님 |
+| `reward_*`, `weight_*`, `free_speed_*`, `learning_iteration` | 이미 가중치·dt가 적용된 step별 보상과 checkpoint 단계의 일정 |
+
+모든 모멘트 기준점은 EEF이며 `world`는 월드 축 표현을 뜻한다. EEF 위치와 wxyz quaternion도 저장한다. 부호는 parent-on-child 지지 반력으로, Hand에 작용한 외력과 반대다. v1과 v2는 원본 좌표 변환 구현이 다르므로 v1 raw에서 v2 support를 직접 빼지 않는다. 새 CSV는 v2 raw/support/pure를 별도로 제공한다. v2 값은 모델 기반 외력 반력 추정이며 실물 센서 정확도를 뜻하지 않는다.
+
+[구현·실제 수집·검증 기록](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-21_clutter_ft_collection.md).
+
+F/T 수집 CSV에서 축별 시간 변화율을 만들 때는 다음 후처리기를 사용한다. Isaac Sim이나 Torch 없이 Python 3.11 이상에서 실행할 수 있다.
+
+```bash
+python -B src/inspire_sweep_baseline/scripts/process_clutter_ft_rates.py <source-directory> --output-dir <new-output-directory>
+```
+
+기본으로 `world/`와 `eef/`에 각각 `fx_rate.csv`·`fy_rate.csv`·`fz_rate.csv`·`mx_rate.csv`·`my_rate.csv`·`mz_rate.csv`를 생성한다. `--frames world` 또는 `--frames eef`로 선택할 수도 있다. 동일 환경·episode의 인접 유효 표본만 사용하며 `(현재값 − 직전값) / control_dt_s`를 계산한다. 힘 변화율은 N/s, 모멘트 변화율은 N·m/s다. 각 파일에는 부호 있는 변화율·절댓값, 원래의 두 값과 차이, 실제 제어 간격, 환경·episode·종료·접촉 context가 있다. `delta_valid=0`과 stale 표본은 제외한다. EEF 축 변화율에는 축 회전에 따른 성분 변화가 포함되므로 월드 축 결과와 구분한다. 출력 폴더를 덮어쓰지 않으며 필터링·clamp·정규화는 하지 않는다.
+
+### Contact Sweep Clutter Fusion — 독립 구성
+
+[환경 설명서](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/CONTACT_SWEEP_CLUTTER_FUSION_ENVIRONMENT.md): Scene 설계 의도, 관측·노이즈·Frame, Action 범위, 보상 수치, 종료와 curriculum을 설명한다.
+
+`Isaac-Inspire-Contact-Sweep-Clutter-Fusion-v0`는 Curriculum v1의 구조와 v2 보정 F/T를 결합한 환경이다. [`envs/contact_sweep_clutter_fusion_envs.py`](inspire_sweep_baseline/envs/contact_sweep_clutter_fusion_envs.py)의 Env·Scene·Manager·PPO Cfg는 기존 환경 Cfg를 상속하지 않는다. MDP 함수와 센서·배치·iteration runner 구현은 재사용한다.
+
+policy는 55D다. Target width를 제거하고, goal은 초기 타겟→기존 목표의 XY distance(m)·시계방향 theta(rad)로 표현한다. 기준축은 robot-root이며 밀기 0·오른쪽 π/2·당기기 π·왼쪽 3π/2다. 실제 goal은 유지한다. 장애물 40D는 reset 시 전면 투영 폭 35% 이상인 물체만 남기고 실제 장애물별 1% 확률로 가시성을 반전한다. 숨긴 슬롯은 전부 0이며 매 step 재판정하지 않는다. Critic만 현재 타겟 3D를 추가로 사용한다.
+
+Arm/Hand action rate와 joint velocity를 각각 하나의 항으로 통합하고 기존 그룹별 상한·가중치 비율을 보존한다. Tilt·displacement도 하나의 object 항으로 합쳐 각각 기존의 15배 효과를 낸다. Contact 두 항의 가중치는 각각 0.4다. EEF 속도·위쪽 +Z 자세·큰 보정 F/T 변화율 비용은 모두 상한을 갖는다.
+
+| 커리큘럼 | 변경 |
+| --- | --- |
+| pushing free speed | 300 iteration마다 0.1→0.05, −0.01 m/s |
+| arm free speed | 300마다 1.0→0.8, −0.02 rad/s |
+| 통합 action rate weight | 300마다 −0.03→−0.06, −0.005 |
+| EEF free speed | 300마다 1.5→0.7, −0.02 m/s |
+| 앞·뒤 goal deadzone | ±60°로 시작, 500까지 유지, 700부터 200마다 1° 감소, 12500에 제거 |
+
+Joint velocity는 Arm −0.03·Hand −0.01 효과로 고정한다. Goal curriculum은 이후 reset에만 적용하며 진행 중 목표를 바꾸지 않는다. Checkpoint load 전에 만들어진 첫 episode도 목표는 유지하고, 다음 reset부터 복원한 단계의 목표 분포를 사용한다.
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Contact-Sweep-Clutter-Fusion-v0 --num_envs 2048 --headless
+
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/play.py \
+  --task Isaac-Inspire-Contact-Sweep-Clutter-Fusion-v0 --num_envs 1 \
+  --checkpoint "<fusion-checkpoint.pt>"
+```
+
+이전 57D policy 모델과 입력 차원이 달라 새 학습이 필요하다. Actor/Critic encoder 입력은 각각 policy55/58+embedding16이며, Actor export raw 입력은 95D다. [전체 계약·계수 근거·검증](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-21_clutter_fusion.md)을 따른다.
+
+### Contact Sweep Clutter Fusion v1.0 — 손 전체 접촉과 변화량 비용
+
+`Isaac-Inspire-Contact-Sweep-Clutter-Fusion-v1_0`은 v3을 직접 상속하며, 이후 v1_1의 기반이다. [`envs/contact_sweep_clutter_fusion_envs.py`](inspire_sweep_baseline/envs/contact_sweep_clutter_fusion_envs.py)에 독립 Rewards·Terminations·Curriculum CFG를 두고, Env/PPO Cfg는 v3을 상속한다. Runtime은 Fusion Env를 상속한 `ContactSweepClutterFusionV1_0Env`이며 episode별 활성 물체를 관리한다. 기존 iteration runner와 관측55/40/3D, Action8D, tactile17D·제어를 유지한다. 같은 task의 후속 수정이며 새 환경 ID가 아니다.
+
+- Deadzone30°·hold3000·500마다5° 감소. 첫 감소는3500, 0°는6000이다.
+- Goal hold tolerance0.03→0.01m:1000부터500마다0.01m 감소.
+- 손 전체30 body의 Net Force≥0.01N에 접촉 유지 보상 `+0.29 * alpha /초`. `alpha=clamp((목표 XY 거리−현재 Goal hold tolerance)/0.015,0,1)`이며 Goal 커리큘럼과 즉시 동기화된다. 5초의 최대+1.45는 alpha=1일 때만 해당한다. 기존 tactile count/ON 보상과 weight 일정은 제거한다.
+- 타겟 외 장애물 접촉 force>20N에 지수 비용. ContactSensor는 normal force를 제공하며 접선 마찰력은 제외한다.
+- EEF F/T의 `abs(norm(current)-norm(previous))` 변화량을 사용한다. Force50→10N, Moment5→1N·m:1000부터250마다1N/0.1N·m 감소. 기존 wrench 상한·양의 보상5% 예산은 유지한다.
+- 활성 물체 각각 Isaac Lab의 `object_com_lin_acc_w`(PhysX 월드 COM 선가속도)의 norm으로 비용을 계산해 합한다. 물체당 raw 비용 상한100이며 exp 평가 전에 입력을 제한한다. 마지막 물리 step의 가속도를 사용하고 제어 주기 속도 차분은 사용하지 않는다. 가속·감속에 같은 지수 비용을 사용한다. 임계값1.0→0.1m/s²:1000부터250마다0.02m/s² 감소.
+- 장애물40D는 가시성 판정·1% 반전 후 관측 물체를 노이즈 포함 root−Y 오름차순(좌→우)으로 정렬·앞쪽 압축한다. 점유된 인접 쌍을 왼쪽부터10% 확률로 한 번씩 순차 교환하며, 매 교환 결과가 다음 쌍에 반영된다. 빈 슬롯은 뒤에서0을 유지하고 입력 순서는 episode 동안 고정한다. `env.events.object_spawn.params.observation_swap_probability`로 확률을 조정한다.
+- Gray1/White1로 시작하고 White는3000·6000, Gray는4500·7500에서1개씩 증가한다. 최종 Gray3/White3/Target1이며 다음 reset부터 적용한다. 비활성 슬롯은 관측·보상·종료에서 제외한다. `env.max_gray_obstacles`/`env.max_white_obstacles`와 `env.curriculum.obstacle_population.params`로 최대 개수·시작/최종 개수·시점을 조정한다.
+
+Arm/Hand action-rate·joint-velocity 네 항은 Workspace 지침의 로컬 함수·고정 계수를 사용한다. 종료 조건은 v3와 같으며 push_fast=0.8이다. 나머지 v3 속도 임계값 커리큘럼도 유지한다. [전체 보상·계수 근거·검증 범위](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-22_clutter_fusion_v1_0.md)를 확인한다.
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Contact-Sweep-Clutter-Fusion-v1_0 --num_envs 2048 --headless
+
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/play.py \
+  --task Isaac-Inspire-Contact-Sweep-Clutter-Fusion-v1_0 --num_envs 1 \
+  --checkpoint "<v1_0-checkpoint.pt>"
+```
+
+2026-10-23 사용자 요청으로 종료 원인 출력과 `push_fast` 매 step 속도 모니터링 코드를 모두 주석 처리했다. 현재 train/play에서는 두 모니터링 출력이 발생하지 않으며 기존 종료 판정과 0.8m/s 임계값은 유지한다.
+
+학습 experiment 이름은 `inspire_contact_sweep_clutter_fusion_v1_0`이다. 참조 로그에 대한 보상 비중 계산은 새 정책의 학습된 비중을 보장하지 않는다.
+
+자동 복구 학습은 아래 전용 실행기를 사용한다. `--max_iterations`는 재시작을 포함한 절대 목표다. 조기 중단 시 최신 저장 checkpoint보다500 iteration 앞선 시점 이하의 가장 가까운 유효 파일에서 새 프로세스로 재개한다. 커리큘럼 적용 후 reset하므로2500에서 재개할 때 첫 rollout부터2500의 물체 수·보상 일정이 적용된다.
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train_resilient.py \
+  --task Isaac-Inspire-Contact-Sweep-Clutter-Fusion-v1_0 \
+  --num_envs 2048 --headless --max_iterations 90000 \
+  --rollback-iterations 500 --max-restarts 10
+```
+
+다른 환경도 `--task`로 지정할 수 있다. `--resume-checkpoint <파일.pt>`로 최초 복원 지점을 지정한다. 기본 저장 위치는 새 `logs/resilient/<task>/<UTC시각_uuid>/attempt_*`이며 `--job-dir <새 경로>`로 바꿀 수 있다. 기존 checkpoint는 보존하고 되돌리기 이후의 폐기된 분기는 재선택하지 않는다. Ctrl+C/SIGTERM에는 재시작하지 않는다. 기본 최대10회 재시작 후에도 실패하면 이유를 남기고 종료한다. [변경 계약·복구 규칙·실제 검증](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-22_clutter_fusion_v1_0_population_recovery.md)을 따른다.
+
+### Contact Sweep Clutter Fusion v3 — 수치 일정 변경
+
+`Isaac-Inspire-Contact-Sweep-Clutter-Fusion-v3`은 Fusion v2를 상속하여 커리큘럼만 변경한다. 기존 Fusion v1의 현재 커리큘럼을 v3으로 옮겼으며 상속은 `v0 → v2 → v3`이다. 구현은 [`envs/contact_sweep_clutter_fusion_envs.py`](inspire_sweep_baseline/envs/contact_sweep_clutter_fusion_envs.py)에 있다. `eef_orientation=None`은 v2에서 상속하고, `push_fast.speed_condition`은 v0·v2·v3 모두 0.8로 고정한다. [버전별 변경 비교](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/CONTACT_SWEEP_CLUTTER_FUSION_VERSIONS.md)를 따른다.
+
+아래 보상 일정은 **iteration 500에서 첫 증감**을 적용한다. 구간 사이에는 값을 유지하고 최종값에서 멈춘다. iteration은 기존 runner의 0부터 시작하는 Learning iteration이다.
+
+| 항목 | 초기값 → 최종값 | 증감 / 간격 | 최종 도달 iteration |
+| --- | --- | --- | --- |
+| pushing free speed | 0.1 → 0.03 m/s | −0.01 / 200 | 1700 |
+| arm free speed | 1.0 → 0.7 rad/s | −0.02 / 200 | 3300 |
+| action rate weight | −0.03 → −0.06 | −0.005 / 200 | 1500 |
+| EEF free speed | 1.5 → 0.3 m/s | −0.02 / 200 | 12300 |
+| contact_any / contact_count weight 각각 | 0.4 → 2.0 | +0.02 / 200 | 16300 |
+| wrench free force rate | 2000 → 1000 N/s | −50 / 200 | 4300 |
+| wrench free moment rate | 100 → 50 N·m/s | −2.5 / 200 | 4300 |
+| wrench saturation force rate | 5000 → 2500 N/s | −125 / 200 | 4300 |
+| wrench saturation moment rate | 250 → 125 N·m/s | −6.25 / 200 | 4300 |
+
+Goal deadzone은 ±60°·1000 iteration 유지·100 간격을 사용한다. 1100에서 첫 1° 감소, 7000에서 0°가 된다. 목표 분포 변경은 다음 reset에 적용한다. 보상 일정은 rollout 전에 즉시 적용하고 checkpoint 재개·재생은 기존 runner의 iteration 복원 방식을 따른다.
+
+관측 policy55D·obstacles40D·privileged3D, Action 8D와 제어·Scene·reset·나머지 보상·종료는 Fusion v2를 상속한다. Joint velocity의 Arm −0.03·Hand −0.01 효과, wrench 가중치 −0.1과 누적 양의 보상 대비 5% 예산 제한도 유지한다.
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Contact-Sweep-Clutter-Fusion-v3 --num_envs 2048 --headless
+
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/play.py \
+  --task Isaac-Inspire-Contact-Sweep-Clutter-Fusion-v3 --num_envs 1 \
+  --checkpoint "<fusion-v3-checkpoint.pt>"
+```
+
+기본 experiment 이름은 `inspire_contact_sweep_clutter_fusion_v3`이다. [실제 검증·미실행 범위](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-21_clutter_fusion_v3.md)를 확인한다.
+
+#### Fusion v3 F/T·물체 선속도 CSV 수집
+
+[`collect_fusion_telemetry.py`](scripts/collect_fusion_telemetry.py)는 위 v3의 등록된 Cfg와 runner를 그대로 사용한다. 실행 클래스만 `ContactSweepClutterFusionEnv`를 상속한 [`ContactSweepClutterFusionTelemetryEnv`](inspire_sweep_baseline/runtime/contact_sweep_clutter_fusion_telemetry.py)로 확장해 종료 직전 값을 부모 reset 전에 취득한다. 별도 task 등록이나 학습은 필요하지 않으며 보상·관측·정책·물리 설정을 변경하지 않는다. GT 선속도는 로그에만 저장한다.
+
+Workspace 루트에서 실행한다. 기본 checkpoint는 사용자가 지정한 `logs/rsl_rl/inspire_contact_sweep_clutter_fusion_v3/2026-10-21_21-55-18/model_7200.pt`다.
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/collect_fusion_telemetry.py \
+  --headless --num_envs 16 --steps 5000
+
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/validate_fusion_telemetry.py \
+  outputs/fusion_telemetry/<수집-폴더>
+```
+
+`--checkpoint <파일.pt>`, `--output-dir <새 폴더>`, `--seed 42`를 지정할 수 있다. GUI 재생은 `--headless`를 빼고 필요하면 `--real-time`을 추가한다. 기본 출력은 `outputs/fusion_telemetry/<UTC timestamp>`이며 기존 폴더를 덮어쓰거나 학습 로그에 쓰지 않는다.
+
+| 파일 | 열·단위 |
+| --- | --- |
+| `wrench_world.csv` | `time,Fx_0,Fy_0,Fz_0,Mx_0,My_0,Mz_0,...,Mz_15`; 월드 축, 힘 N·모멘트 N·m |
+| `wrench_eef.csv` | 동일 열; 회전하는 EEF 축 |
+| `object_velocity.csv` | `time,vx_Target_0,vy_Target_0,vz_Target_0,vx_obstacle_0_0,...,vz_obstacle_2_15`; 월드 축 COM 선속도 m/s |
+| `episodes.csv` | 환경마다 `episode_id,episode_step,terminated,time_out,delta_valid,target_id`에 `_0`…`_15` 접미사 |
+
+모든 CSV는 **제어 step당 한 행**이며 `time`은 누적 시뮬레이션 초다. 0.02초 간격·5,000행이면 환경당 100초, 16환경을 합쳐 1,600초다. 물체는 환경마다 Target(`mass_cylinder`) 1개·장애물 3개이며 각속도는 저장하지 않는다. 속도의 반올림·정규화·clamp를 하지 않는다.
+
+F/T는 기존 `PureWristWrench`의 Hand 중력·관성 하중 보정값이며, 두 좌표계 모두 모멘트 원점은 EEF다. 부호는 parent-on-child 반력이다. 기존 변화율 비용과 비교하려면 `wrench_world.csv`에서 `(현재−이전)/0.02`를 사용하고 **현재 행의 `delta_valid_N=0`인 차분은 제외**한다. 종료 직전 표본은 보존되며 다음 episode 첫 표본만 차분에서 제외한다. `metadata.json`에는 checkpoint 해시·복원 iteration·좌표계·물체 순서·열 정의·실행 설정이 있다. [실제 수집·검증 기록](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-22_fusion_telemetry.md)을 따른다.
+
+### Contact Sweep Clutter Fusion v2 — EEF 자세 보상 제거
+
+`Isaac-Inspire-Contact-Sweep-Clutter-Fusion-v2`는 Fusion v0를 직접 상속하여 `rewards.eef_orientation=None`만 적용한다. 직접 연결된 EEF 자세 termination은 없으며 종료 조건은 v0와 같다. 물체 전도·낙하와 손목 높이 종료는 유지한다. 관측·Action·물리·reset·나머지 보상과 커리큘럼·PPO 설정도 v0를 상속한다. 따라서 `push_fast.speed_condition=0.8`이며 속도·action rate·goal deadzone 일정은 위 Fusion v0 설정을 사용한다. v3의 추가 contact·wrench 커리큘럼은 사용하지 않는다.
+
+구현은 [`envs/contact_sweep_clutter_fusion_envs.py`](inspire_sweep_baseline/envs/contact_sweep_clutter_fusion_envs.py)이며, 기본 experiment 이름은 `inspire_contact_sweep_clutter_fusion_v2`다.
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Contact-Sweep-Clutter-Fusion-v2 --num_envs 2048 --headless
+
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/play.py \
+  --task Isaac-Inspire-Contact-Sweep-Clutter-Fusion-v2 --num_envs 1 \
+  --checkpoint "<fusion-v2-checkpoint.pt>"
+```
+
+[검증과 미실행 범위](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-21_clutter_fusion_v2.md).
+
+### Fusion v1_1 / v1_2 parameter variants
+
+EnvCfg inheritance: v1_0 → v1_1 → v1_2. Both use the v1_0 runtime and independent reward/curriculum configurations. PPO is unchanged except experiment names.
+
+- `Isaac-Inspire-Contact-Sweep-Clutter-Fusion-v1_1`: Goal hold 1cm fixed, contact fade disabled; obstacle free force 100→50N by iteration10000; object free acceleration 100→5m/s² and wrench free magnitude changes 500→5N / 50→0.5Nm by iteration20000.
+- `Isaac-Inspire-Contact-Sweep-Clutter-Fusion-v1_2`: same thresholds, Goal hold 2→1cm by5000 then0.5cm by10000; contact fade width1cm synchronized with live Goal hold tolerance.
+
+All new schedules first decrease at1000 and update every250 iterations. Endpoints are exact. The second Goal stage first decreases at5250. Resume/rewind recomputes from absolute iteration. Existing velocity, obstacle displacement/tilt costs and termination thresholds remain active.
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train_resilient.py \
+  --task Isaac-Inspire-Contact-Sweep-Clutter-Fusion-v1_1 \
+  --num_envs 2048 --headless --max_iterations 90000
+```
+
+Replace the task suffix with `v1_2` for the second variant. Only offline tests were run; simulation and training performance are unverified.
+
+### Fusion v1_1_1 acceleration experiment
+
+`Isaac-Inspire-Contact-Sweep-Clutter-Fusion-v1_1_1` derives from v1_1. Goal hold1cm, fade0 and acceleration100→5m/s² (first update1000, interval250, endpoint20000) remain. Obstacle free force2000N and wrench magnitude-change allowances5000N/500Nm are fixed; their curricula are removed. Other costs, terminations and PPO remain. Use `train_resilient.py --task Isaac-Inspire-Contact-Sweep-Clutter-Fusion-v1_1_1 --num_envs 2048 --headless --max_iterations 90000` through `./IsaacLab/isaaclab.sh -p`. Failure in this variant alone does not establish acceleration as the cause; other costs remain active.
+
+### Fusion v1_1_2 force-curriculum experiment
+
+`Isaac-Inspire-Contact-Sweep-Clutter-Fusion-v1_1_2` directly derives from v1_1. Only the free acceleration changes to1,000,000m/s² fixed, and its curriculum is removed. Goal hold1cm, fade0, obstacle force100→50N and wrench magnitude-change500→5N /50→0.5Nm curricula remain. PhysX acceleration calculation, other costs, terminations and PPO remain unchanged. The very large threshold is finite; nonfinite acceleration still receives capped cost.
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train_resilient.py \
+  --task Isaac-Inspire-Contact-Sweep-Clutter-Fusion-v1_1_2 \
+  --num_envs 2048 --headless --max_iterations 90000
+```
+
+### Fusion v1_3 continuous threshold curricula
+
+`Isaac-Inspire-Contact-Sweep-Clutter-Fusion-v1_3` directly derives from v1_1. Goal hold1cm and fade0 remain. Threshold points (iteration,value):
+
+- Obstacle force: (1000,200), (5000,100), (10000,50) N.
+- Wrench force/moment change: (1000,1000/100), (5000,500/50), (10000,100/10), (20000,5/0.5) N/Nm.
+- Object acceleration: (2000,100), (5000,20), (10000,10), (20000,5) m/s².
+
+Hold through the first point, interpolate linearly each iteration, hold after the final point. Resume/rewind recomputes from absolute iteration. Other rewards, schedules, terminations and PPO remain unchanged.
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train_resilient.py \
+  --task Isaac-Inspire-Contact-Sweep-Clutter-Fusion-v1_3 \
+  --num_envs 2048 --headless --max_iterations 90000
+```
+
+### Fusion v1_3_1 goal/contact-width curricula
+
+`Isaac-Inspire-Contact-Sweep-Clutter-Fusion-v1_3_1` directly derives from v1_3. Goal hold radius points are (5000,0.02),(10000,0.01),(20000,0.005)m. Contact fade width points are (5000,0.001),(10000,0.01)m. Hold before the first point, interpolate each iteration, hold after the final point. Contact alpha reads the current Goal hold radius. All other rewards, schedules, terminations and PPO remain unchanged.
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train_resilient.py \
+  --task Isaac-Inspire-Contact-Sweep-Clutter-Fusion-v1_3_1 \
+  --num_envs 2048 --headless --max_iterations 90000
+```
+
+
+### Fusion v1_3_1 페널티 입력 수집
+
+`collect_fusion_reward_inputs.py`는 기본 `model_14500.pt`를 16환경·25,000 제어 step(환경당500초)으로 재생한다. 등록된 v1_3_1 Cfg/runner를 사용하고, 계측 runtime `RewardTelemetryEnv`는 v1_0 runtime을 상속한다. 종료 전 표본을 보존하며 환경별 CSV에 episode/step·종료 원인·reset 차분 유효성을 기록한다. 물체별 Hand 접촉 합력 norm과 COM 가속도 norm, EEF 선속력, 보정 전 RAW F/T와 실제 wrench_change 입력을 함께 저장한다. 정책·보상·종료 계약을 바꾸지 않는다.
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/collect_fusion_reward_inputs.py \
+  --headless --num_envs 16 --steps 25000 \
+  --checkpoint logs/resilient/Isaac-Inspire-Contact-Sweep-Clutter-Fusion-v1_3_1/2026-10-22_10-27-21_5c4cf77b/attempt_000/model_14500.pt
+```
+
+`--task Isaac-Inspire-Contact-Sweep-Clutter-Fusion-v1_0`를 지정하면 v1_0의 등록 Cfg/runner를 사용한다. `--checkpoint <model.pt> --steps 3000 --num_envs 16`으로 환경당60초를 수집한다. 기본 task는 기존 v1_3_1이며, task와 checkpoint 환경을 일치시킨다. [v1_0 두 체크포인트 실행 기록](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-23_fusion_v1_0_checkpoint_comparison.md).
+
+기본 출력은 `outputs/fusion_reward_inputs/<UTC timestamp>`다. 새 출력 폴더는 `--output-dir`로 지정한다. `env_00.csv`~`env_15.csv`와 `resets.csv`, 설정·metadata를 생성한다. `scripts/validate_fusion_reward_inputs.py <출력 폴더>`는 전체 검증과 `episode_index.csv`/`environment_summary.csv`를 생성한다. [측정 계약·실제 실행·검증](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-23_fusion_v1_3_1_reward_inputs.md)을 따른다.
+## Contact Sweep Clutter Fusion v1_4
+
+`Isaac-Inspire-Contact-Sweep-Clutter-Fusion-v1_4`는 v1_0 EnvCfg/PPOCfg를 직접 상속한다. 250 간격 속도 커리큘럼·후반 가속도/Wrench 제한·최대 Gray5/White5/Target1·Goal hold3초 성공 종료를 추가했다. Goal hold weight9.0, Hand contact1.45, 물체 속도 종료1.0m/s다. [전체 일정·상속·검증 기록](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-23_clutter_fusion_v1_4.md)을 따른다.
+
+학습된 v1_0을 이어갈 때는 Workspace 루트에서 실행한다. Resume는 checkpoint의 절대 iteration과 optimizer 상태를 유지한다.
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Contact-Sweep-Clutter-Fusion-v1_4 \
+  --num_envs 2048 --headless --resume \
+  --load_run "<v1_0-run-절대경로>" --checkpoint "<model_ITER.pt>"
+```
+
+## Fusion v1_0 동기화 3카메라 녹화
+
+`record_three_views.py`는 기존 play와 독립적으로 1환경에서 하이 앵글·선반 뒤 아이 레벨·선반 내부 탑다운을 동시에 기록한다.
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/record_three_views.py \
+  --checkpoint logs/TEMP/Isaac-Inspire-Contact-Sweep-Clutter-Fusion-v1_0/2026-10-22_08-34-18_4833cc00/attempt_000/model_16400.pt \
+  --headless --seconds 60
+```
+
+기본960×720·50fps·3,000프레임씩 별도 MP4 세 개를 `outputs/three_view_recordings/<timestamp>/`에 기록한다. `--output-dir`은 새 폴더만 허용하며, `--real-time`은 가능한 경우 벽시계 속도를 제한한다. 녹화 길이는 시뮬레이션 시간으로 결정한다. 세 카메라는 같은 post-step 상태를 공유하며 자동 reset이 발생한 프레임은 reset 후 장면이다. `frames.csv`에 영상/시뮬레이션 시각·episode·reset을 기록하고 `metadata.json`에 완료 상태와 프레임 수를 남긴다. 시점은 스크립트의 `views`에서 조절한다.
+
+시점 확인만 하려면 위 명령에 `--preview-only`를 추가한다. 기본960×720 PNG를 카메라별1장씩 같은 시뮬레이션 시점에 저장하며 MP4는 만들지 않는다. 최소 해상도는720×480이다. 2026-10-23 조정: 뒤쪽 시점은18cm 후퇴·8cm 하강, 하이 앵글은 베이스 방향(+X)15cm 이동 및 안쪽 조준, 탑다운은 광학축 기준−90° 회전(기존 화면 위→왼쪽).
+
+최신 미리보기 설정(앞의 해상도·시점 설명을 대체): 기본1920×1080,16:9 비율 필수. Top down은 선반의 실제 pose를 매 프레임 따라가며 선반 평면에 수직·변에 평행하게 정렬한다. 광각 pinhole 초점거리는 top7.5mm/rear12mm(high18mm), 수평 aperture24mm다. Rear 위치는(-1.60,0,1.16)으로 추가 후퇴했다. `--preview-only`는 이 설정으로 PNG3개만 만든다.
+
+## Fusion Holding v0
+
+Task: `Isaac-Inspire-Contact-Sweep-Clutter-Fusion-Holding-v0`. [환경 구성](inspire_sweep_baseline/envs/contact_sweep_clutter_fusion_holding_envs.py)은 v1_0을 직접 상속한다. v1_0 runtime·관측·Action·물리·목표12~15cm 생성는 유지하고 타겟 과속 종료는1.0m/s로 변경한다. Holding v0의 최대 용량은 Gray5/White5이며 White는3000부터3000마다 증가하여12000에서5개, Gray는4500부터3000마다 증가하여13500에서5개가 된다. object 변위 제곱합 계수는5.0이다(합의 상한0.04·전체 weight−30 유지). 속도 세 커리큘럼은 논의 기준인 v1_4의 일정을 동일하게 적용한다(Arm0.7/EEF0.2/pushing0.02 최종값). Hand contact weight는1.45이며 fade0을 유지한다.
+
+Goal distance의 허용 반경은0, 가중치100이다. Goal hold는 가중치2의 거리·속도 정착 보상으로 교체한다. `exp(-ln(2)*((d/r)^2+(v/s)^2))`, d는 목표 XY 거리, v는 물체3D 속력이다. d≥3r이면0이며 선반 밖·높이 이탈·과도한 기울기·비유한 상태는0이다. 정상 높이는 shelf-local root z1.04~1.07m, 물체 중심 XY범위±0.16/±0.46m, 선반과 타겟 상방 축 사이 각≤0.9rad다. 위치 척도 r은0/1000/6000/10000/12000/16000에서1/2/2/1/1/0.5cm, 속도 척도 s는6000까지0.05m/s,10000까지0.02로 감소 후 유지한다. 성공은 정착 점수와 독립적으로 오차≤0.005m·속력≤0.01m/s·정상 상태·실패 없음이 연속3초일 때 발생한다.
+
+| Iteration | Wrench free(N/Nm), weight | Accel free(m/s²), weight | Obstacle free(N), weight |
+| --- | --- | --- | --- |
+| 0~1000 | 50/5, 0 | 50, 0 | 80, 0 |
+| 3000 | 50/5, −0.03 | 50, −0.01 | 80, −0.02 |
+| 6000~10000 | 30/3, −0.1 | 30, −0.03 | 50, −0.05 |
+| 12000 이후 | 20/2, −0.1 | 20, −0.05 | 30, −0.1 |
+
+250 iteration 단위 보간으로 첫 음수 가중치는1250부터 적용한다. 0↔음수 전환 시 해당 stateful term의 이력을 초기화한다. 기존 비용 함수·상한·Wrench 예산 제한은 유지한다. 커리큘럼은 절대 iteration 기준으로 checkpoint load/rewind를 지원한다.
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Contact-Sweep-Clutter-Fusion-Holding-v0 --num_envs 2048 --headless
+
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/play.py \
+  --task Isaac-Inspire-Contact-Sweep-Clutter-Fusion-Holding-v0 --num_envs 1 \
+  --checkpoint "<Holding-checkpoint.pt>" --real-time
+```
+
+새 PPO 설정은 v1_0 runner를 상속하고 experiment 이름만 `inspire_contact_sweep_clutter_fusion_holding_v0`로 분리한다. [개발·검증 기록](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-23_fusion_holding_v0.md).
+
+## Fusion Holding OSC v0
+
+`Isaac-Inspire-Contact-Sweep-Clutter-Fusion-Holding-OSC-v0`는 Holding v0을 직접 상속하고 Arm을 Robot Base 기준 상대 pose OSC로 바꾼다. 2026-10-23 후속 요청으로 EEF 기준을 Robot Base 기준으로 변경하고 stiffness를200에서100으로 낮췄다. damping ratio1·관성 분리·중력 보상, Arm 관절 PD gain0, Hand·보상·종료·커리큘럼은 유지한다. [환경 설명·Windows/Linux 명령](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/CONTACT_SWEEP_CLUTTER_FUSION_HOLDING_OSC_V0_ENVIRONMENT.md).
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Contact-Sweep-Clutter-Fusion-Holding-OSC-v0 \
+  --num_envs 2048 --headless --max_iterations 90000
+```
+
+Holding OSC v0의 이동·회전 명령은 Robot Base 좌표축 기준이다. EEF가 회전해도 base +X 명령의 방향은 유지되며 현재 EEF pose에 상대 목표를 만든다. ObjectRandom v0도 이 제어 변경을 상속한다. 기존 EEF 기준으로 학습한 checkpoint는 명령 의미가 달라 같은 동작을 보장하지 않는다.
+
+## Holding OSC ObjectRandom v0
+
+`Isaac-Inspire-Contact-Sweep-Clutter-Fusion-Holding-OSC-ObjectRandom-v0`는 Holding OSC 직접 파생이며 NVIDIA YCB4종과 균일크기3단계를 생성 시 무작위 선택한다. reset마다 위치·yaw·질량·마찰을 갱신하며 후속 요청으로 기존 대비1.5배 확대하고 실제 회전 바운딩 박스의 비겹침·선반 경계 검사를 추가했다. 타겟은 기존 반경4cm·높이10cm 실린더를 유지한다. 장애물은 −Y 상방을 +Z로 회전해 바로 세운다. 물체 개수 curriculum은 임시 비활성화하여 처음부터 타겟1+Gray7+White7=15개를 사용하며 장애물 관측·encoder를14슬롯56D로 확장했다. 이전40D encoder checkpoint와 직접 호환되지 않는다. 초기 흔들림을 줄이기 위해 원본 시각 모델과 별도로 평평한 상자·32각 원통 충돌 프록시를 사용한다. reset은 기존 물체 텔레포트 방식이다. [상세 계약·실행](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/CONTACT_SWEEP_CLUTTER_FUSION_HOLDING_OSC_OBJECT_RANDOM_V0_ENVIRONMENT.md).
+
+## Fusion Holding v1 계열
+
+기존 v0 ID를 유지하면서 장애물 관측 용량을16슬롯으로 늘린 세 환경을 추가했다. 각 슬롯은 `[present, x, y, z]`이며 Actor/Critic 각각의 encoder는 `64 → 32 → 16D`다. 원시 입력은 Actor119D/Critic122D, 압축 후 MLP 입력은71D/74D다. 초기 관측의 가림·노이즈·정렬과 실행 중 타겟GT의 Critic 전용 경계는 유지한다.
+
+| 환경 ID | 직접 부모 EnvCfg | 물체 수와 제어 |
+| --- | --- | --- |
+| `Isaac-Inspire-Contact-Sweep-Clutter-Fusion-Holding-v1` | Holding v0 | Gray/White 각1→5 curriculum 유지, Joint Position Arm |
+| `Isaac-Inspire-Contact-Sweep-Clutter-Fusion-Holding-OSC-v1` | Holding v1 | 같은 population, OSC v0과 같은 Robot Base 기준·stiffness100 |
+| `Isaac-Inspire-Contact-Sweep-Clutter-Fusion-Holding-OSC-ObjectRandom-v1` | Holding OSC v2 | 기존 ObjectRandom 자산·reset·물성 재사용, 초기Gray1/White1→최대Gray8/White8 |
+
+16슬롯은 관측 용량이다. Holding/OSC의 실제 장애물은 최대10개이고, ObjectRandom-v1은 부모와 같은 개수 일정으로 최대16개까지 증가한다. 비활성 슬롯은0으로 채운다. v0의40D/56D encoder checkpoint는 v1의64D encoder와 직접 호환되지 않으므로 새 학습을 시작한다. 새 PPO 설정은 환경별 experiment 이름을 분리한다.
+
+Workspace 루트에서 실행한다. 아래 병렬 환경 수는 실행 예시이며 처리량 보장이 아니다.
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Contact-Sweep-Clutter-Fusion-Holding-v1 --num_envs 2048 --headless
+
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Contact-Sweep-Clutter-Fusion-Holding-OSC-v1 --num_envs 2048 --headless
+
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Contact-Sweep-Clutter-Fusion-Holding-OSC-ObjectRandom-v1 --num_envs 256 --headless
+```
+
+재생은 같은 task ID와 해당 v1 checkpoint를 지정하여 `src/inspire_sweep_baseline/scripts/play.py --task <task-ID> --num_envs 1 --checkpoint <v1-checkpoint.pt> --real-time`을 사용한다. [Holding v1](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/CONTACT_SWEEP_CLUTTER_FUSION_HOLDING_V1_ENVIRONMENT.md) · [OSC v1](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/CONTACT_SWEEP_CLUTTER_FUSION_HOLDING_OSC_V1_ENVIRONMENT.md) · [ObjectRandom v1](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/CONTACT_SWEEP_CLUTTER_FUSION_HOLDING_OSC_OBJECT_RANDOM_V1_ENVIRONMENT.md) · [개발·검증 기록](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-23_fusion_holding_v1.md).
+
+## Fusion Holding OSC v2
+
+`Isaac-Inspire-Contact-Sweep-Clutter-Fusion-Holding-OSC-v2`는 Holding v2를 직접 상속한다. UR10 Reach의 RPY 상대 OSC·effort 제한을 사용하되 Arm6관절과 현재 EEF body/offset에 연결한다. 위치/회전 stiffness80/25, scale0.03/0.15, 관성 분리·중력 보상false이며 Scene 중력과 Hand·관측·보상은 부모를 유지한다. [전체 설정·실행·검증](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-23_fusion_holding_osc_v2.md).
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Contact-Sweep-Clutter-Fusion-Holding-OSC-v2 --num_envs 2048 --headless
+```
+
+## Fusion Holding v2
+
+`Isaac-Inspire-Contact-Sweep-Clutter-Fusion-Holding-v2`는 Holding-v1을 직접 상속한다. 성공·목표 유지 보상·접촉 간주의 공통 반경은5,000 iteration까지2cm,10,000에서1cm,20,000에서0.5cm이며 구간마다 iteration 단위로 선형 감소한다. goal_hold 계수는2→4다. 손 접촉은0.01N 이상 또는 유효한 목표 반경 안이면 인정하며, 계수1.45를 유지하고 fade는 새 함수에서 제거했다. 성공 속도0.01m/s·연속3초는 유지한다.
+
+직접 상속은 Holding-v1 → Holding-v2 → Holding-OSC-v2 → Holding-OSC-ObjectRandom-v1이다. ObjectRandom은 부모 개수 일정의 상한만8/8로 확장하고 새 목표 일정도 상속한다. 이전 ObjectRandom-v1 checkpoint는 제어가 OSC-v1에서OSC-v2로 바뀌었으므로 같은 동작을 보장하지 않는다.
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Contact-Sweep-Clutter-Fusion-Holding-v2 --num_envs 2048 --headless
+
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/play.py \
+  --task Isaac-Inspire-Contact-Sweep-Clutter-Fusion-Holding-v2 \
+  --num_envs 1 --checkpoint "<Holding-v2-checkpoint.pt>" --real-time
+```
+
+[전체 계약](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/CONTACT_SWEEP_CLUTTER_FUSION_HOLDING_V2_ENVIRONMENT.md) · [개발·검증](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-23_fusion_holding_v2.md).
+
+ObjectRandom-v1 개수 일정(2026-10-23 후속): 0~2,999는Gray1/White1,3,000에White+1,4,500에Gray+1 이후1,500마다 교대로 증가한다.21,000에7/8,22,500부터8/8로 고정한다. 최대 타겟1+장애물16=17개이며 기존16슬롯64D 관측·encoder를 유지한다. [검증 기록](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-23_object_random_v1_population.md).
+
+## Holding ObjectRandom Test v0
+
+`Isaac-Inspire-Contact-Sweep-Clutter-Fusion-Holding-ObjectRandom-Test-v0`는 Holding-v2를 직접 상속하는 Joint Position 제어 테스트다. OSC-ObjectRandom-v1의 물체 랜덤화·배치·물성·1/1→8/8 일정과16슬롯 관측을 재사용한다. Arm은 Holding-v2의 JointPositionActionCfg와 관절 PD를 유지한다. OSC가 불안정한 상태에서 제어 문제와 복잡한 물체 학습 문제를 분리 검증하기 위한 환경이며 학습 성과는 아직 확인하지 않았다.
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Contact-Sweep-Clutter-Fusion-Holding-ObjectRandom-Test-v0 \
+  --num_envs 256 --headless
+```
+
+[상속·설정·play 명령](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/CONTACT_SWEEP_CLUTTER_FUSION_HOLDING_OBJECT_RANDOM_TEST_V0_ENVIRONMENT.md) · [검증 기록](../../example/Contact-Rich-Manipulation-Context/02_implementation/logs/2026-10-23_holding_object_random_test_v0.md).
+
+2026-10-28 추가: `Isaac-Inspire-Final-GoalAccuracy-v0_1`은 Accuracy v0를 상속한다. 2cm 목표, 타겟 접촉, 고정 20cm Reaching, 6cm 외곽 Hold, `3.7 exp(-20d)` 거리 보상과 0.06×0.08×0.10m 큐브 타겟을 적용한다. 기존 ±10% 크기 랜덤화와 reset은 유지한다. Manager 이름·검증 범위는 [구현 계약](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/FINAL_GOAL_ACCURACY_V0_1_ENVIRONMENT.md)을 따른다. 기존 v0/v1의 Gym ID도 `Accuracy`로 교정했으며 동작은 보존한다.
+
+2026-10-29 추가: `Isaac-Inspire-Final-GoalAccuracy-v0_2`는 v0_1을 직접 상속하고, timeout 시 타겟–목표 XY 거리가 **2cm 미만**이면 마지막 transition에 **+30**을 한 번 지급한다. 다른 보상·종료·커리큘럼은 그대로 유지한다. [환경 계약 및 검증 범위](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/FINAL_GOAL_ACCURACY_V0_2_ENVIRONMENT.md).
+
+2026-10-31 추가: `Isaac-Inspire-Final-GoalAccuracy-v0_2_1`은 v0_2를 직접 상속한다. 실제 타겟–손 접촉만 보상하고 성공 timeout에 **+75(2cm 경계 포함)**를 지급한다. 매 reset 배치와 타겟 종류를 재추첨하며 연속 동일 종류도 허용한다. 논리 관측은 유지하지만 고정 후보 풀로 물리 물체가 21→36개가 된다. CPU 78개 및 GPU 2 env의 부분 reset·전체 16후보 검증을 통과했다. 대규모 성능과 학습 결과는 미검증이다. [구현 계약·Windows 실행 명령](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/FINAL_GOAL_ACCURACY_V0_2_1_ENVIRONMENT.md).
+
+2026-10-30 추가: `Isaac-Inspire-Final-GoalAccuracy-v0_3`는 v0_2를 직접 상속한다. 타겟 접촉 OR 목표 점유 조건을 유지하고 contact weight를 **0.3625**로 줄인다. 목표 거리 보상은 **최단 XY 거리 갱신량 ×100**, tolerance **0**으로 바꿔 중심까지 지급한다. 목표 반경은 **3cm(경계 포함)**이며 성공 timeout에 **+100**을 지급한다. Hold 외곽 6cm, Reaching 10cm 및 다른 구성·일정은 부모와 같다. [구현 계약·검증·리뷰](../../example/Contact-Rich-Manipulation-Context/02_implementation/environments/FINAL_GOAL_ACCURACY_V0_3_ENVIRONMENT.md).
+
+```bash
+./IsaacLab/isaaclab.sh -p src/inspire_sweep_baseline/scripts/train.py \
+  --task Isaac-Inspire-Final-GoalAccuracy-v0_3 --num_envs 2048 --headless
+```

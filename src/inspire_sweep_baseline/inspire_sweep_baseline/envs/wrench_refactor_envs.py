@@ -1,0 +1,375 @@
+"""Independent Wrench Refactor v0; no previous environment CFG inheritance."""
+import math
+
+from isaaclab.envs import ManagerBasedRLEnvCfg, ViewerCfg
+from isaaclab.utils import configclass
+from ..assets.robot import ARM_JOINT_NAMES
+from ..assets.scenes.wrench_refactor import WrenchRefactorSceneCfg
+from ..mdp.actions.wrench_refactor import WrenchRefactorActionsCfg, WrenchRefactorOSCActionCfg
+from ..mdp.observations.wrench_refactor import WrenchRefactorObservationsCfg, WrenchRefactorRelativeObservationsCfg, WrenchRefactorRelativeV2ObservationsCfg
+from ..mdp.commands.wrench_refactor import WrenchRefactorCommandsCfg
+from ..mdp.rewards.wrench_refactor import WrenchRefactorRewardsCfg, WrenchRefactorV1RewardsCfg, WrenchRefactorV2RewardsCfg, WrenchRefactorRelativeRewardsCfg, WrenchRefactorRelativeV3RewardsCfg
+from ..mdp.terminations.wrench_refactor import WrenchRefactorTerminationsCfg
+from ..mdp.events.wrench_refactor import WrenchRefactorEventsCfg
+from ..mdp.curricula.wrench_refactor import WrenchRefactorCurriculumCfg, WrenchRefactorRelativeCurriculumCfg
+
+
+@configclass
+class WrenchRefactorEnvCfg(ManagerBasedRLEnvCfg):
+    scene: WrenchRefactorSceneCfg = WrenchRefactorSceneCfg(num_envs=2048, env_spacing=2.5)
+    observations: WrenchRefactorObservationsCfg = WrenchRefactorObservationsCfg()
+    actions: WrenchRefactorActionsCfg = WrenchRefactorActionsCfg()
+    commands: WrenchRefactorCommandsCfg = WrenchRefactorCommandsCfg()
+    rewards: WrenchRefactorRewardsCfg = WrenchRefactorRewardsCfg()
+    terminations: WrenchRefactorTerminationsCfg = WrenchRefactorTerminationsCfg()
+    events: WrenchRefactorEventsCfg = WrenchRefactorEventsCfg()
+    curriculum: WrenchRefactorCurriculumCfg = WrenchRefactorCurriculumCfg()
+    obstacle_observation_slots: int = 16
+    max_gray_obstacles: int = 3
+    max_white_obstacles: int = 3
+    target_bounding_box: bool = False
+    goal_success_radius: float = 0.03
+    goal_hold_outer_radius: float | None = None
+    goal_reward_height_limit: float = 0.14
+    red_margin: float = 0.023
+    rear_offset: float = 0.02
+    contact_height_limit: float = 0.14
+    gray_padding: float = 0.065
+    viewer: ViewerCfg = ViewerCfg(eye=(3.5, 3.5, 3.5), lookat=(0.0, 0.0, 0.3))
+
+    def __post_init__(self):
+        self.decimation = 2
+        self.episode_length_s = 10.0
+        self.sim.dt = 0.01
+        self.sim.render_interval = 2
+        self.sim.physx.bounce_threshold_velocity = 0.2
+        # Use Isaac Lab's default budget instead of the old 8x reservation;
+        # validate simultaneous 2048-env resets and contact rollout for overflow.
+        self.sim.physx.gpu_found_lost_aggregate_pairs_capacity = 2**25
+        self.sim.physx.gpu_total_aggregate_pairs_capacity = 16 * 1024 * 16
+        self.sim.physx.friction_correlation_distance = 0.00625
+        self.sim.physx.gpu_max_rigid_patch_count = 5 * 2**17
+        self.scene.robot.actuators["arm"].velocity_limit_sim = dict(
+            zip(ARM_JOINT_NAMES, (2.0, 2.0, 2.0, 4.0, 4.0, 4.0))
+        )
+        defaults = self.sim.physics_material
+        self.scene.robot.spawn.friction_defaults = defaults.copy()
+        self.scene.shelf.spawn.friction_defaults = defaults.copy()
+        for obj in self.scene.object_collection.rigid_objects.values():
+            obj.spawn.friction_defaults = defaults.copy()
+        self.scene.configure_population_capacity(
+            self.max_gray_obstacles,
+            self.max_white_obstacles,
+            self.obstacle_observation_slots,
+        )
+        self.contact_height_limit = self.goal_reward_height_limit
+        self.rewards.target_goal_hold.params = {
+            "full_reward_radius": 0.025,
+            "outer_radius": 0.035,
+        }
+        self.commands.target_goal_pos.goal_radius = self.goal_success_radius
+        eef = self.scene.ee_frame.target_frames[0]
+        self.actions.arm_action.body_name = eef.prim_path.rsplit("/", 1)[-1]
+        self.actions.arm_action.body_offset = WrenchRefactorOSCActionCfg.OffsetCfg(
+            pos=eef.offset.pos, rot=eef.offset.rot
+        )
+        self.scene.robot.actuators["arm"].stiffness = 0.0
+        self.scene.robot.actuators["arm"].damping = 0.0
+
+
+
+@configclass
+class WrenchRefactorV1EnvCfg(WrenchRefactorEnvCfg):
+    """Direct v0 child; change only contact-maintenance and goal-distance rewards."""
+    rewards: WrenchRefactorV1RewardsCfg = WrenchRefactorV1RewardsCfg()
+
+
+@configclass
+class WrenchRefactorV2EnvCfg(WrenchRefactorEnvCfg):
+    """Direct v0 child with signed cumulative-displacement distance reward."""
+    rewards: WrenchRefactorV2RewardsCfg = WrenchRefactorV2RewardsCfg()
+
+
+@configclass
+class WrenchRefactorV3EnvCfg(WrenchRefactorV2EnvCfg):
+    """Preserve v2 rewards; restore the offset EEF task frame and kinematics."""
+    def __post_init__(self):
+        super().__post_init__()
+        from ..mdp.action_functions.wrench_refactor import WrenchRefactorOSCAction
+        self.actions.arm_action.class_type = WrenchRefactorOSCAction
+
+
+@configclass
+class WrenchRefactorV3TestEnvCfg(WrenchRefactorV3EnvCfg):
+    """Temporary v3 diagnostic: sample only leftward (shelf -Y) goals."""
+    def __post_init__(self):
+        super().__post_init__()
+        self.events.object_spawn.params['sweep_direction'] = 'left'
+        self.terminations.arm_joint_velocity = None
+
+
+@configclass
+class WrenchRefactorV0_1EnvCfg(WrenchRefactorEnvCfg):
+    """Direct v0 child with uncapped policy-input action-rate cost."""
+    def __post_init__(self):
+        super().__post_init__()
+        from ..mdp.reward_functions.wrench_refactor import policy_action_rate_penalty
+        self.rewards.robot_action_rate_penalty.func = policy_action_rate_penalty
+
+
+@configclass
+class WrenchRefactorV1_1EnvCfg(WrenchRefactorV1EnvCfg):
+    """Direct v1 child with uncapped policy-input action-rate cost."""
+    def __post_init__(self):
+        super().__post_init__()
+        from ..mdp.reward_functions.wrench_refactor import policy_action_rate_penalty
+        self.rewards.robot_action_rate_penalty.func = policy_action_rate_penalty
+
+
+@configclass
+class WrenchRefactorV2_1EnvCfg(WrenchRefactorV2EnvCfg):
+    """Direct v2 child with uncapped policy-input action-rate cost."""
+    def __post_init__(self):
+        super().__post_init__()
+        from ..mdp.reward_functions.wrench_refactor import policy_action_rate_penalty
+        self.rewards.robot_action_rate_penalty.func = policy_action_rate_penalty
+
+
+@configclass
+class WrenchRefactorV3_1EnvCfg(WrenchRefactorV3EnvCfg):
+    """Direct v3 child with uncapped policy-input action-rate cost."""
+    def __post_init__(self):
+        super().__post_init__()
+        from ..mdp.reward_functions.wrench_refactor import policy_action_rate_penalty
+        self.rewards.robot_action_rate_penalty.func = policy_action_rate_penalty
+
+
+@configclass
+class WrenchRefactorRelativeEnvCfg(WrenchRefactorV3_1EnvCfg):
+    """v3_1 physics/reset with shared, predominantly EEF-relative observations."""
+    observations: WrenchRefactorRelativeObservationsCfg = WrenchRefactorRelativeObservationsCfg()
+    rewards: WrenchRefactorRelativeRewardsCfg = WrenchRefactorRelativeRewardsCfg()
+    curriculum: WrenchRefactorRelativeCurriculumCfg = WrenchRefactorRelativeCurriculumCfg()
+    # Final observation limits, AFTER gravity/inertia cancellation and noise.
+    wrist_wrench_observation_limits: tuple = (150.0, 150.0, 150.0, 8.0, 8.0, 8.0)
+
+    def __post_init__(self):
+        super().__post_init__()
+        self.scene.robot.spawn.sensor_mass = 0.280
+        # Vendor right-hand URDF: all twelve revolute joints effort=10, velocity=1.
+        self.scene.robot.actuators['hand'].effort_limit_sim = 10.0
+        self.rewards.target_goal_first_entry_bonus.weight = 10.0
+        self.rewards.robot_action_rate_penalty.params = {}
+        self.scene.robot.actuators['arm'].velocity_limit_sim = dict.fromkeys(ARM_JOINT_NAMES, 3.14)
+        self.scene.robot.actuators['arm'].effort_limit_sim = dict(
+            zip(ARM_JOINT_NAMES, (150.0, 150.0, 150.0, 28.0, 28.0, 28.0)))
+        self.terminations.arm_joint_velocity.params['threshold'] = 4.0
+
+
+@configclass
+class WrenchRefactorRelativeV2EnvCfg(WrenchRefactorRelativeEnvCfg):
+    """Direct v0 child; asymmetric initial/current target observations only."""
+    observations: WrenchRefactorRelativeV2ObservationsCfg = WrenchRefactorRelativeV2ObservationsCfg()
+
+
+@configclass
+class WrenchRefactorRelativeV2_1EnvCfg(WrenchRefactorRelativeV2EnvCfg):
+    """Change only distance alignment to reset-to-goal versus reset-to-current."""
+
+    def __post_init__(self):
+        super().__post_init__()
+        from ..mdp.reward_functions.wrench_refactor import displacement_cosine_goal_distance
+        self.rewards.target_goal_distance.func = displacement_cosine_goal_distance
+        self.rewards.target_goal_distance.params = {"distance_scale": 0.05}
+
+
+@configclass
+class WrenchRefactorRelativeV2_7EnvCfg(WrenchRefactorRelativeV2_1EnvCfg):
+    """Keep v2_1 and initialize the arm opposite the requested push via IK."""
+
+    def __post_init__(self):
+        super().__post_init__()
+        from isaaclab.managers import EventTermCfg
+        from ..mdp.event_functions.wrench_refactor import reset_robot_from_goal_ik
+        self.events.robot_initial_pose = EventTermCfg(
+            func=reset_robot_from_goal_ik, mode='reset', params={
+                'front_clearance': (0.10, 0.13), 'lateral_offset': (0.10, 0.14), 'height_jitter': 0.01,
+            })
+
+
+@configclass
+class WrenchRefactorRelativeIKV0EnvCfg(WrenchRefactorRelativeV2_7EnvCfg):
+    """Goal-conditioned IK with shared initial-only Actor/Critic observations."""
+    debug_initial_ik_bounds: bool = True
+    observations: WrenchRefactorRelativeObservationsCfg = WrenchRefactorRelativeObservationsCfg()
+
+    def __post_init__(self):
+        super().__post_init__()
+        self.events.robot_initial_pose.params.update(
+            front_clearance=(0.08, 0.10), lateral_offset=(0.10, 0.18),
+            height_jitter=0.02, height_offset=0.01)
+
+
+@configclass
+class WrenchRefactorRelativeIKV0_1EnvCfg(WrenchRefactorRelativeIKV0EnvCfg):
+    """Disable only the first goal-entry bonus."""
+
+    def __post_init__(self):
+        super().__post_init__()
+        self.rewards.target_goal_first_entry_bonus = None
+
+
+@configclass
+class WrenchRefactorRelativeIKV1EnvCfg(WrenchRefactorRelativeIKV0EnvCfg):
+    """Contact-gated cumulative progress, without contact/settling event rewards."""
+
+    def __post_init__(self):
+        super().__post_init__()
+        from ..mdp.reward_functions.wrench_refactor import contact_gated_displacement_cosine_goal_distance
+        self.rewards.target_goal_distance.func = contact_gated_displacement_cosine_goal_distance
+        self.rewards.target_goal_distance.params = {'distance_scale': 0.05, 'threshold_n': 0.01}
+        self.rewards.target_contact = None
+        self.rewards.target_goal_hold = None
+        self.rewards.target_goal_first_entry_bonus = None
+        self.rewards.target_goal_success_bonus = None
+        self.terminations.target_goal_success = None
+
+
+@configclass
+class WrenchRefactorRelativeV2_6EnvCfg(WrenchRefactorRelativeV2_1EnvCfg):
+    """Only fix the goal to 9 cm straight left of the initial target."""
+
+    def __post_init__(self):
+        super().__post_init__()
+        self.events.object_spawn.params['fixed_goal_offset'] = (0.0, -0.09)
+
+
+@configclass
+class WrenchRefactorRelativeV2_4EnvCfg(WrenchRefactorRelativeV2_1EnvCfg):
+    """Holding-style new-best XY progress, without the outward-distance cost."""
+
+    def __post_init__(self):
+        super().__post_init__()
+        from ..mdp.reward_functions.wrench import WrenchV0_4GoalProgress
+        self.rewards.target_goal_distance.func = WrenchV0_4GoalProgress
+        self.rewards.target_goal_distance.params = {"position_tolerance": 0.0}
+        # Holding OSC uses reaching=30 and goal progress=100 (reward/metre).
+        self.rewards.target_goal_distance.weight = 100.0 * self.rewards.target_reaching.weight / 30.0
+        self.rewards.target_inverse_distance = None
+
+
+@configclass
+class WrenchRefactorRelativeV2_5EnvCfg(WrenchRefactorRelativeV2_4EnvCfg):
+    """Preserve v2_4 and disable only contact-maintenance reward."""
+
+    def __post_init__(self):
+        super().__post_init__()
+        self.rewards.target_contact = None
+
+
+@configclass
+class WrenchRefactorRelativeV2_2EnvCfg(WrenchRefactorRelativeV2_1EnvCfg):
+    """Direct v2_1 child with only contact-maintenance reward disabled."""
+
+    def __post_init__(self):
+        super().__post_init__()
+        self.rewards.target_contact = None
+
+
+@configclass
+class WrenchRefactorRelativeV2_3EnvCfg(WrenchRefactorRelativeV2_1EnvCfg):
+    """Direct v2_1 child; reach behind the live target, retaining contact reward."""
+
+    debug_reaching_point: bool = True
+
+    def __post_init__(self):
+        super().__post_init__()
+        from ..mdp.reward_functions.wrench_refactor import OppositeReachProgress
+        self.rewards.target_reaching.func = OppositeReachProgress
+        self.rewards.target_reaching.params["offset"] = 0.05
+        self.rewards.target_reaching.params["near_radius"] = 0.05
+
+
+@configclass
+class WrenchRefactorRelativeV3EnvCfg(WrenchRefactorRelativeEnvCfg):
+    """Direct v0 child: replace contact maintenance by contact-gated distance."""
+    rewards: WrenchRefactorRelativeV3RewardsCfg = WrenchRefactorRelativeV3RewardsCfg()
+
+    def __post_init__(self):
+        super().__post_init__()
+        self.rewards.target_goal_first_entry_bonus = None
+        self.rewards.target_goal_hold = None
+        self.rewards.target_goal_success_bonus = None
+        self.terminations.target_goal_success = None
+
+
+@configclass
+class WrenchRefactorRelativeV2_1TestRightEnvCfg(WrenchRefactorRelativeV2_1EnvCfg):
+    """Parent policy evaluation with right goals only."""
+
+    def __post_init__(self):
+        super().__post_init__()
+        self.events.object_spawn.params['goal_angle_range'] = (math.radians(60), math.radians(120))
+
+
+@configclass
+class WrenchRefactorRelativeV2_1TestPullEnvCfg(WrenchRefactorRelativeV2_1EnvCfg):
+    """Parent policy evaluation with pull goals only."""
+
+    def __post_init__(self):
+        super().__post_init__()
+        self.events.object_spawn.params['goal_angle_range'] = (math.radians(-60), math.radians(60))
+
+
+@configclass
+class WrenchRefactorRelativeV2_1TestLeftEnvCfg(WrenchRefactorRelativeV2_1EnvCfg):
+    """Parent policy evaluation with left goals only."""
+
+    def __post_init__(self):
+        super().__post_init__()
+        self.events.object_spawn.params['goal_angle_range'] = (math.radians(240), math.radians(300))
+
+
+@configclass
+class WrenchRefactorRelativeV2_1TestPushEnvCfg(WrenchRefactorRelativeV2_1EnvCfg):
+    """Parent policy evaluation with push goals only."""
+
+    def __post_init__(self):
+        super().__post_init__()
+        self.events.object_spawn.params['goal_angle_range'] = (math.radians(120), math.radians(240))
+
+
+@configclass
+class WrenchRefactorRelativeV3TestRightEnvCfg(WrenchRefactorRelativeV3EnvCfg):
+    """Parent policy evaluation with right goals only."""
+
+    def __post_init__(self):
+        super().__post_init__()
+        self.events.object_spawn.params['goal_angle_range'] = (math.radians(60), math.radians(120))
+
+
+@configclass
+class WrenchRefactorRelativeV3TestPullEnvCfg(WrenchRefactorRelativeV3EnvCfg):
+    """Parent policy evaluation with pull goals only."""
+
+    def __post_init__(self):
+        super().__post_init__()
+        self.events.object_spawn.params['goal_angle_range'] = (math.radians(-60), math.radians(60))
+
+
+@configclass
+class WrenchRefactorRelativeV3TestLeftEnvCfg(WrenchRefactorRelativeV3EnvCfg):
+    """Parent policy evaluation with left goals only."""
+
+    def __post_init__(self):
+        super().__post_init__()
+        self.events.object_spawn.params['goal_angle_range'] = (math.radians(240), math.radians(300))
+
+
+@configclass
+class WrenchRefactorRelativeV3TestPushEnvCfg(WrenchRefactorRelativeV3EnvCfg):
+    """Parent policy evaluation with push goals only."""
+
+    def __post_init__(self):
+        super().__post_init__()
+        self.events.object_spawn.params['goal_angle_range'] = (math.radians(120), math.radians(240))

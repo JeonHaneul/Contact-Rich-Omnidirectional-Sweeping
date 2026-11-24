@@ -1,0 +1,11 @@
+"""Independent observation width with the shared obstacle encoder."""
+from .wrench_refactor_models import WrenchRefactorRelativeModel
+
+
+class StabilizeSweepModel(WrenchRefactorRelativeModel):
+    raw_observation_dim = 67
+
+
+class SweepOnlyModel(StabilizeSweepModel):
+    """Same encoder and policy architecture, without the phase observation."""
+    raw_observation_dim = 66
